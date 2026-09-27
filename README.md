@@ -134,9 +134,18 @@ add `<chord name="..." frets="x32010"/>` to the song.
 
 The `songs/` folder is copied next to the executable after every build.
 
-**Don't want to build it?** Every push runs GitHub Actions, which builds a ready-to-run Windows version.
-Open the repository's *Actions* tab, click the latest `build` run, and download the
-`GuitarChordPlayer-windows` artifact.
+**Don't want to build it?** Download `GuitarChordPlayer-windows.zip` from the
+[latest release](https://github.com/bahalouati/GuitarChordPlayer/releases/latest), unzip it anywhere you can write to
+(e.g. Documents or Desktop, not Program Files), and run `GuitarChordPlayer.exe`.
+
+### Updates
+
+Every push to the main branch is built by GitHub Actions and published as a release (`build-<number>`).
+The app checks for a newer release when it starts (at most every 12 hours; switch this off under *Help*),
+and *Help → Check for updates* checks right away. When there is a new build, a green **Update available** button
+appears in the status bar. *Install and restart* downloads the new version, replaces the app's files and starts it
+again. Your own songs in *Documents\Guitar Chord Player* are not touched. Automatic install is Windows only. On
+Linux, `git pull` and rebuild.
 
 Linux: `sudo apt install qt6-base-dev qt6-multimedia-dev`, then run the same two `cmake` commands.
 
@@ -268,6 +277,10 @@ finger would.
 - *Amazing Grace* (traditional): 3/4 waltz strum and picking, with lyrics
 - *Pop Practice Song*: five sections with different strums, sixteenths, accents, chucks and tempo changes
 - *Travis Picking Study*: alternating-bass fingerpicking
+- **Spacetoon** (`songs/spacetoon/`): Remi, Hunter x Hunter, Ahd Al Asdiqaa, Hazim Al Raad, Ana wa Akhi, Sabiq wa
+  Lahiq, Digimon, Treasure Island, Nawar, Asrar Al Muhit and Omi Kam Ahwaha. The chords come from the charts on
+  Guitarabia and Ultimate Guitar. Bar lengths and tempos are approximate, and there are no lyrics (add your own
+  with *Insert → Lyric line*).
 
 ## Code layout
 
@@ -277,6 +290,7 @@ finger would.
 | `src/ChordSheet.*` | Plain-text chord sheet → song XML (New Song dialog) |
 | `src/NewSongDialog.*`, `src/SongEditor.*`, `src/ChordFinderDialog.*` | Song creation and editing tools |
 | `src/LyricsWidget.*` | Lyrics view |
+| `src/Updater.*` | Checks GitHub releases and installs updates |
 | `src/LlmPrompt.*`, `docs/LLM_PROMPT.md` | The LLM prompt (embedded in the app) and reading LLM answers |
 | `src/ChordLibrary.*` | Built-in chord shapes, name normalisation, generated barre chords |
 | `src/GuitarSynth.*` | Karplus-Strong strings, body resonance, metronome click |

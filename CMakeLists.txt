@@ -4,7 +4,7 @@ project(GuitarChordPlayer VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets Multimedia)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets Multimedia Network)
 qt_standard_project_setup()
 
 qt_add_executable(GuitarChordPlayer WIN32
@@ -24,6 +24,7 @@ qt_add_executable(GuitarChordPlayer WIN32
     src/SongEditor.h src/SongEditor.cpp
     src/ChordFinderDialog.h src/ChordFinderDialog.cpp
     src/LlmPrompt.h src/LlmPrompt.cpp
+    src/Updater.h src/Updater.cpp
 )
 
 # The LLM prompt is kept in docs/ and embedded so the app can copy it to the clipboard.
@@ -32,7 +33,13 @@ qt_add_resources(GuitarChordPlayer docs
     FILES docs/LLM_PROMPT.md
 )
 
-target_link_libraries(GuitarChordPlayer PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Multimedia)
+target_link_libraries(GuitarChordPlayer PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Multimedia Qt6::Network)
+
+# The updater compares APP_BUILD with the newest GitHub release ("build-<number>").
+# CI sets APP_BUILD to the workflow run number; local builds are 0 (development).
+set(APP_BUILD 0 CACHE STRING "Build number, set by CI")
+set(UPDATE_REPO "bahalouati/GuitarChordPlayer" CACHE STRING "GitHub repository to update from")
+target_compile_definitions(GuitarChordPlayer PRIVATE APP_BUILD=${APP_BUILD} UPDATE_REPO="${UPDATE_REPO}")
 
 if(MSVC)
     target_compile_options(GuitarChordPlayer PRIVATE /W4 /permissive- /utf-8)

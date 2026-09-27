@@ -7,6 +7,7 @@
 #include "LyricsWidget.h"
 #include "PatternWidget.h"
 #include "SongEditor.h"
+#include "Updater.h"
 #include "WavWriter.h"
 
 #include <QAction>
@@ -17,6 +18,7 @@
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
+#include <QDateTime>
 #include <QDockWidget>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -51,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     QString err;
     m_audioOk = m_engine->start(&err);
 
+    m_updater = new Updater(this);
     buildUi();
     buildMenus();
 
@@ -97,6 +100,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                 break;
             }
         }
+    }
+
+    // Look for a newer build now and then (at most every 12 hours), without getting in the way.
+    m_updateBtn = new QPushButton;
+    m_updateBtn->setStyleSheet(QStringLiteral("color: white; background: #2e8b57; padding: 2px 10px;"));
+    m_updateBtn->hide();
+    statusBar()->addPermanentWidget(m_updateBtn);
+    connect(m_updateBtn, &QPushButton::clicked, m_updater, [this] { m_updater->check(true); });
+    connect(m_updater, &Updater::updateAvailable, this, [this](int build, const QString &) {
+        m_updateBtn->setText(tr("Update available (build %1) - install").arg(build));
+        m_updateBtn->show();
+    });
+    const QDateTime lastCheck = s.value(QStringLiteral("lastUpdateCheck")).toDateTime();
+    if (s.value(QStringLiteral("autoUpdateCheck"), true).toBool()
+        && (!lastCheck.isValid() || lastCheck.secsTo(QDateTime::currentDateTime()) > 12 * 3600)) {
+        s.setValue(QStringLiteral("lastUpdateCheck"), QDateTime::currentDateTime());
+        QTimer::singleShot(3000, m_updater, [this] { m_updater->check(false); });
     }
 
     m_timer = new QTimer(this);
@@ -345,11 +365,22 @@ void MainWindow::buildMenus()
         m_status->setText(tr("LLM prompt copied - paste it into ChatGPT, Claude, Gemini..., then use "
                              "File > New song from LLM answer"));
     });
+    help->addSeparator();
+    help->addAction(tr("Check for &updates..."), m_updater, [this] { m_updater->check(true); });
+    QAction *autoCheck = help->addAction(tr("Check for updates automatically"));
+    autoCheck->setCheckable(true);
+    autoCheck->setChecked(QSettings().value(QStringLiteral("autoUpdateCheck"), true).toBool());
+    connect(autoCheck, &QAction::toggled, this, [](bool on) { QSettings().setValue(QStringLiteral("autoUpdateCheck"), on); });
+    help->addSeparator();
     help->addAction(tr("About"), this, [this] {
+        const QString build = Updater::currentBuild() > 0 ? tr("Build %1").arg(Updater::currentBuild())
+                                                          : tr("Development build");
         QMessageBox::about(this, tr("About Guitar Chord Player"),
-                           tr("<b>Guitar Chord Player</b><br>Plays chord charts from XML files with a "
+                           tr("<b>Guitar Chord Player</b> - %1<br>Plays chord charts from XML files with a "
                               "synthesized (Karplus-Strong) guitar so you can see and hear how songs "
-                              "are strummed and picked."));
+                              "are strummed and picked.<br><br>Updates come from "
+                              "<a href=\"https://github.com/%2/releases\">github.com/%2</a>.")
+                           .arg(build, Updater::repository()));
     });
 }
 

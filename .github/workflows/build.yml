@@ -8,6 +8,8 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    permissions:
+      contents: write   # to publish releases
     steps:
       - uses: actions/checkout@v4
       - uses: jurplel/install-qt-action@v4
@@ -17,7 +19,8 @@ jobs:
           modules: 'qtmultimedia'
           cache: true
       - name: Configure
-        run: cmake -S . -B build
+        # The build number is compiled in so the app's updater can tell which build it is.
+        run: cmake -S . -B build -DAPP_BUILD=${{ github.run_number }}
       - name: Build
         run: cmake --build build --config Release
       - name: Package
@@ -27,14 +30,29 @@ jobs:
       - name: Smoke test (render every song to WAV)
         shell: pwsh
         run: |
-          Get-ChildItem songs/*.xml | ForEach-Object {
-            $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--render", $_.FullName, "$env:RUNNER_TEMP/$($_.BaseName).wav" -Wait -PassThru -NoNewWindow
+          Get-ChildItem songs -Recurse -Filter *.xml | ForEach-Object {
+            $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--render", "`"$($_.FullName)`"", "$env:RUNNER_TEMP/$($_.BaseName).wav" -Wait -PassThru -NoNewWindow
             if ($p.ExitCode -ne 0) { throw "Rendering $($_.Name) failed" }
           }
       - uses: actions/upload-artifact@v4
         with:
           name: GuitarChordPlayer-windows
           path: dist
+      - name: Zip for release
+        if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+        shell: pwsh
+        run: Compress-Archive -Path dist/* -DestinationPath GuitarChordPlayer-windows.zip
+      # Every push to the default branch becomes a release; the app updates itself from the latest one.
+      - name: Publish release
+        if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          body: ${{ github.event.head_commit.message }}
+          target_commitish: ${{ github.sha }}
+          files: GuitarChordPlayer-windows.zip
+          make_latest: true
 
   linux:
     runs-on: ubuntu-24.04
@@ -47,4 +65,4 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j4
       - name: Smoke test (render every song to WAV)
-        run: for f in songs/*.xml; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav"; done
+        run: find songs -name '*.xml' -print0 | while IFS= read -r -d '' f; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav" || exit 1; done

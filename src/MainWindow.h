@@ -10,6 +10,7 @@ class ChordDiagramWidget;
 class LyricsWidget;
 class PatternWidget;
 class SongEditor;
+class Updater;
 class QDockWidget;
 class QCheckBox;
 class QFileSystemWatcher;
@@ -76,6 +77,8 @@ private:
     SongEditor *m_editor = nullptr;
     QDockWidget *m_editorDock = nullptr;
     QTimer *m_dirRefresh = nullptr;
+    Updater *m_updater = nullptr;
+    QPushButton *m_updateBtn = nullptr;
     QListWidget *m_sectionList = nullptr;
     QLabel *m_title = nullptr;
     QLabel *m_info = nullptr;
