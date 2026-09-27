@@ -17,6 +17,7 @@ qt_add_executable(GuitarChordPlayer WIN32
     src/AudioEngine.h src/AudioEngine.cpp
     src/WavWriter.h src/WavWriter.cpp
     src/AudioTrack.h src/AudioTrack.cpp
+    third_party/minimp3/minimp3_impl.cpp
     src/ChordDetector.h src/ChordDetector.cpp
     src/Arranger.h src/Arranger.cpp
     src/Translator.h src/Translator.cpp
@@ -40,6 +41,9 @@ qt_add_resources(GuitarChordPlayer docs
     FILES docs/LLM_PROMPT.md resources/app.png resources/i18n/ar.json
 )
 
+target_include_directories(GuitarChordPlayer PRIVATE third_party/minimp3)
+# minimp3 must see the same sample type everywhere it is included.
+target_compile_definitions(GuitarChordPlayer PRIVATE MINIMP3_FLOAT_OUTPUT)
 target_link_libraries(GuitarChordPlayer PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Multimedia Qt6::Network)
 
 # The updater compares APP_BUILD with the newest GitHub release ("build-<number>").

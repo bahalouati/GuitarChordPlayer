@@ -357,7 +357,8 @@ finger would.
 | `src/LyricsWidget.*` | Lyrics view (left-to-right and right-to-left) |
 | `src/LyricsAligner.*`, `src/LyricsDialog.*` | Spreading pasted lyrics over a song's bars |
 | `src/Updater.*` | Checks GitHub releases and installs updates |
-| `src/AudioTrack.*` | Decoding recordings (Qt Multimedia) and WSOLA time stretching |
+| `src/AudioTrack.*` | Decoding recordings (MP3 with [minimp3](https://github.com/lieff/minimp3), WAV, others via Qt Multimedia) and WSOLA time stretching |
+| `third_party/minimp3/` | minimp3 MP3 decoder (public domain, CC0) |
 | `src/ChordDetector.*` | Beat tracking, chroma and chord recognition for *New song from MP3* |
 | `installer.iss`, `resources/` | Windows installer (Inno Setup), icon and version info |
 | `src/ChordName.*` | Chord name parsing (English / solfège / Arabic), transposing, simplifying |

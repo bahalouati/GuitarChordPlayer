@@ -34,6 +34,9 @@ jobs:
             $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--render", "`"$($_.FullName)`"", "$env:RUNNER_TEMP/$($_.BaseName).wav" -Wait -PassThru -NoNewWindow
             if ($p.ExitCode -ne 0) { throw "Rendering $($_.Name) failed" }
           }
+          # MP3 decoding (with cover art and an awkward file name, like downloaded songs).
+          $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--decode", "`"tests/data/tone with cover (1).mp3`"" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "MP3 decoding failed" }
           # Chord detection round trip: render a song, then detect its chords from the WAV.
           $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--detect", "$env:RUNNER_TEMP/pop_practice.wav", "$env:RUNNER_TEMP/detected.xml" -Wait -PassThru -NoNewWindow
           if ($p.ExitCode -ne 0) { throw "Chord detection failed" }
@@ -86,5 +89,6 @@ jobs:
         run: |
           find songs -name '*.xml' -print0 | while IFS= read -r -d '' f; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav" || exit 1; done
           ./build/GuitarChordPlayer --detect /tmp/pop_practice.wav /tmp/detected.xml
+          ./build/GuitarChordPlayer --decode "tests/data/tone with cover (1).mp3"
       - name: Translations (lists interface text without an Arabic translation)
         run: python3 scripts/check_translations.py
