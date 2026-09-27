@@ -16,6 +16,7 @@ qt_add_executable(GuitarChordPlayer WIN32
     src/Sequencer.h src/Sequencer.cpp
     src/AudioEngine.h src/AudioEngine.cpp
     src/WavWriter.h src/WavWriter.cpp
+    src/PdfExport.h src/PdfExport.cpp
     src/AudioTrack.h src/AudioTrack.cpp
     third_party/minimp3/minimp3_impl.cpp
     src/ChordDetector.h src/ChordDetector.cpp

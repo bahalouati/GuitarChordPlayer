@@ -1,5 +1,6 @@
 #include "ChordDiagramWidget.h"
 
+#include <QCoreApplication>
 #include <QPainter>
 #include <QPainterPath>
 #include <algorithm>
@@ -44,30 +45,45 @@ void ChordDiagramWidget::setDimmed(bool dimmed)
 void ChordDiagramWidget::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing);
-
     const QColor fg = m_dimmed ? palette().color(QPalette::Disabled, QPalette::WindowText)
                                : palette().color(QPalette::WindowText);
-    const QColor accent(255, 140, 40);
-    const QColor dotColor = m_dimmed ? fg : QColor(40, 120, 220);
+    DiagramStyle style;
+    style.foreground = fg;
+    style.dots = m_dimmed ? fg : QColor(40, 120, 220);
+    style.glowing = !m_dimmed;
+    style.font = font();
+    drawChordDiagram(p, rect().adjusted(8, 4, -8, -4), m_chord ? &*m_chord : nullptr, style, m_caption, m_glow);
+}
 
-    const QRectF r = rect().adjusted(8, 4, -8, -4);
-    QFont f = font();
+void drawChordDiagram(QPainter &p, const QRectF &r, const ChordShape *chord, const DiagramStyle &style,
+                      const QString &caption, const std::array<float, 6> &glow)
+{
+    p.save();
+    p.setRenderHint(QPainter::Antialiasing);
+    const QColor fg = style.foreground;
+    const QColor accent(255, 140, 40);
+    const QColor dotColor = style.dots;
+    // Sizes below are in screen points for a widget; keep the same proportions on any device
+    // (a PDF page has another resolution).
+    const double dpiScale = 96.0 / std::max(1, p.device() ? p.device()->logicalDpiY() : 96);
+    auto setSize = [&](QFont &font, double pt) { font.setPointSizeF(std::max(0.5, pt * dpiScale * style.fontScale)); };
+    QFont f = style.font;
+    auto tr = [](const char *s) { return QCoreApplication::translate("ChordDiagramWidget", s); };
 
     // Caption and chord name.
     double y = r.top();
-    if (!m_caption.isEmpty()) {
-        f.setPointSizeF(std::max(8.0, r.height() * 0.04));
+    if (!caption.isEmpty()) {
+        setSize(f, std::max(style.minFont, r.height() * 0.04));
         // Shrink the caption until it fits the width.
-        while (f.pointSizeF() > 6.0 && QFontMetricsF(f).horizontalAdvance(m_caption) > r.width())
-            f.setPointSizeF(f.pointSizeF() - 0.5);
+        while (f.pointSizeF() > 0.6 && QFontMetricsF(f, p.device()).horizontalAdvance(caption) > r.width())
+            f.setPointSizeF(f.pointSizeF() * 0.95);
         p.setFont(f);
         p.setPen(fg);
-        p.drawText(QRectF(r.left(), y, r.width(), r.height() * 0.07), Qt::AlignCenter, m_caption);
+        p.drawText(QRectF(r.left(), y, r.width(), r.height() * 0.07), Qt::AlignCenter, caption);
         y += r.height() * 0.07;
     }
-    const QString name = m_chord ? m_chord->name : tr("N.C.");
-    f.setPointSizeF(std::max(10.0, r.height() * 0.08));
+    const QString name = chord ? chord->name : tr("N.C.");
+    setSize(f, std::max(style.minFont * 1.25, r.height() * 0.08));
     f.setBold(true);
     p.setFont(f);
     p.setPen(fg);
@@ -75,10 +91,11 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
     y += r.height() * 0.14;
     f.setBold(false);
 
-    if (!m_chord)
+    if (!chord) {
+        p.restore();
         return;
-    const ChordShape &c = *m_chord;
-
+    }
+    const ChordShape &c = *chord;
     // Which frets to show: start at the nut unless the shape sits higher up.
     int maxFret = 0, minFret = 99;
     for (int fr : c.frets) {
@@ -101,14 +118,14 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
     const double fy = gridH / numFrets;
 
     // Frets
-    p.setPen(QPen(fg, 1.5));
+    p.setPen(QPen(fg, 1.5 * style.lineScale));
     for (int i = 0; i <= numFrets; ++i)
         p.drawLine(QPointF(gridLeft, gridTop + i * fy), QPointF(gridLeft + gridW, gridTop + i * fy));
     if (baseFret == 1) {
-        p.setPen(QPen(fg, std::max(4.0, fy * 0.12)));
+        p.setPen(QPen(fg, std::max(4.0 * style.lineScale, fy * 0.12)));
         p.drawLine(QPointF(gridLeft, gridTop), QPointF(gridLeft + gridW, gridTop));
     } else {
-        f.setPointSizeF(std::max(8.0, fy * 0.28));
+        setSize(f, std::max(style.minFont, fy * 0.28));
         p.setFont(f);
         p.setPen(fg);
         p.drawText(QRectF(gridLeft - sx * 1.5, gridTop, sx * 1.35, fy), Qt::AlignRight | Qt::AlignVCenter,
@@ -118,9 +135,9 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
     // Strings (thicker for bass), glowing when plucked.
     for (int i = 0; i < 6; ++i) {
         const double x = gridLeft + i * sx;
-        const float g = std::clamp(m_glow[size_t(i)], 0.f, 1.f);
-        const double w = 1.0 + (5 - i) * 0.35;
-        if (g > 0.02f && !m_dimmed) {
+        const float g = std::clamp(glow[size_t(i)], 0.f, 1.f);
+        const double w = (1.0 + (5 - i) * 0.35) * style.lineScale;
+        if (g > 0.02f && style.glowing) {
             QColor halo = accent;
             halo.setAlphaF(0.35 * g);
             p.setPen(QPen(halo, w + 10 * g, Qt::SolidLine, Qt::RoundCap));
@@ -146,13 +163,13 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
     const double mr = std::min(sx, markH) * 0.28;
     for (int i = 0; i < 6; ++i) {
         const QPointF ctr(gridLeft + i * sx, gridTop - markH * 0.55);
-        const float g = std::clamp(m_glow[size_t(i)], 0.f, 1.f);
+        const float g = std::clamp(glow[size_t(i)], 0.f, 1.f);
         if (c.frets[size_t(i)] == 0) {
-            p.setPen(QPen(g > 0.05f && !m_dimmed ? accent : fg, 1.8));
+            p.setPen(QPen(g > 0.05f && style.glowing ? accent : fg, 1.8 * style.lineScale));
             p.setBrush(Qt::NoBrush);
             p.drawEllipse(ctr, mr, mr);
         } else if (c.frets[size_t(i)] < 0) {
-            p.setPen(QPen(fg, 1.8));
+            p.setPen(QPen(fg, 1.8 * style.lineScale));
             p.drawLine(ctr + QPointF(-mr, -mr), ctr + QPointF(mr, mr));
             p.drawLine(ctr + QPointF(-mr, mr), ctr + QPointF(mr, -mr));
         }
@@ -188,7 +205,7 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
     }
 
     // Finger dots.
-    f.setPointSizeF(std::max(7.0, dotR * 0.9));
+    setSize(f, std::max(style.minFont * 0.875, dotR * 0.9));
     f.setBold(true);
     p.setFont(f);
     for (int i = 0; i < 6; ++i) {
@@ -196,13 +213,13 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
         if (fr <= 0)
             continue;
         const QPointF ctr(gridLeft + i * sx, gridTop + (fr - baseFret + 0.5) * fy);
-        const float g = std::clamp(m_glow[size_t(i)], 0.f, 1.f);
+        const float g = std::clamp(glow[size_t(i)], 0.f, 1.f);
         if (!inBarre[size_t(i)]) {
             p.setPen(Qt::NoPen);
             p.setBrush(dotColor);
             p.drawEllipse(ctr, dotR, dotR);
         }
-        if (g > 0.05f && !m_dimmed) {
+        if (g > 0.05f && style.glowing) {
             p.setPen(QPen(accent, 2 + 3 * g));
             p.setBrush(Qt::NoBrush);
             p.drawEllipse(ctr, dotR + 2, dotR + 2);
@@ -213,10 +230,11 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
         for (int j = 0; j < i; ++j)
             if (inBarre[size_t(j)] && c.fingers[size_t(j)] == finger && c.frets[size_t(j)] == fr)
                 firstOfBarre = false;
-        if (finger > 0 && (!inBarre[size_t(i)] || firstOfBarre)) {
+        if (style.fingerNumbers && finger > 0 && (!inBarre[size_t(i)] || firstOfBarre)) {
             p.setPen(Qt::white);
             p.drawText(QRectF(ctr.x() - dotR, ctr.y() - dotR, 2 * dotR, 2 * dotR), Qt::AlignCenter,
                        finger == 5 ? QStringLiteral("T") : QString::number(finger));
         }
     }
+    p.restore();
 }

@@ -52,6 +52,7 @@ private slots:
     void rearrange();
     void reloadSong();
     void exportWav();
+    void exportPdf();
     void refreshSongList();
     void updateView();
     void applyTempo();
