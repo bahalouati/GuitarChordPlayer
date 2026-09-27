@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Traditional hymn (public domain), a waltz in 3/4. -->
+<song title="Amazing Grace" artist="Traditional (John Newton)" bpm="84" beatsPerBar="3">
+  <patterns>
+    <!-- Bass note on 1, strums on 2 and 3: "boom - chick chick" -->
+    <pattern name="waltz" subdivision="2">B - d u d u</pattern>
+    <pattern name="pick" subdivision="2">B 3 2 1 2 3</pattern>
+    <pattern name="end" subdivision="2">D - - - - -</pattern>
+  </patterns>
+  <sections>
+    <section name="Intro" pattern="pick">
+      <bars>G | G | C | G</bars>
+    </section>
+    <section name="Verse" pattern="waltz">
+      <bars>G | G | C | G | G | G | D | D</bars>
+      <bars>G | G/B | C | G | G | D | G | G</bars>
+    </section>
+    <section name="Last verse" pattern="pick" bpm="76">
+      <bars>G | G | C | G | G | G | D | D</bars>
+      <bars>G | G/B | C | G | G | D | G | %</bars>
+    </section>
+    <section name="Ending" pattern="end" bpm="70">
+      <bars>C | G</bars>
+    </section>
+  </sections>
+  <arrangement>
+    <play section="Intro"/>
+    <play section="Verse" repeat="2"/>
+    <play section="Last verse"/>
+    <play section="Ending"/>
+  </arrangement>
+</song>

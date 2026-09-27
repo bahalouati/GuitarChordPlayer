@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Traditional (public domain). Played in 6/8: two beats per bar,
+     each beat split in three (subdivision="3"), so the bpm counts dotted quarters. -->
+<song title="House of the Rising Sun" artist="Traditional" bpm="54" beatsPerBar="2">
+  <patterns>
+    <!-- Classic arpeggio: bass, then up the strings and back down -->
+    <pattern name="arpeggio" subdivision="3">B 3 2 1 2 3</pattern>
+    <pattern name="arpeggio-alt" subdivision="3">B 3 2 A 2 3</pattern>
+    <pattern name="ending" subdivision="3">D - - - - -</pattern>
+  </patterns>
+  <sections>
+    <section name="Intro" pattern="arpeggio">
+      <bars>Am | C | D | F | Am | E | Am | E</bars>
+    </section>
+    <section name="Verse" pattern="arpeggio">
+      <bars>Am | C | D | F | Am | C | E | E</bars>
+      <bars>Am | C | D | F | Am | E | Am | E</bars>
+    </section>
+    <section name="Solo" pattern="arpeggio-alt">
+      <bars repeat="2">Am | C | D | F | Am | E | Am | E</bars>
+    </section>
+    <section name="Ending" pattern="ending" bpm="46">
+      <bars>Am | C | D | F | Am | E | Am | Am</bars>
+    </section>
+  </sections>
+  <arrangement>
+    <play section="Intro"/>
+    <play section="Verse" repeat="2"/>
+    <play section="Solo"/>
+    <play section="Verse"/>
+    <play section="Ending"/>
+  </arrangement>
+</song>

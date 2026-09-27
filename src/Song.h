@@ -1,0 +1,110 @@
+#pragma once
+
+#include "ChordLibrary.h"
+
+#include <QString>
+#include <QVector>
+#include <memory>
+
+// One step (sub-beat slot) of a strumming / picking pattern.
+struct PatternStep
+{
+    enum class Kind { Rest, Down, Up, Mute, Pick };
+
+    Kind kind = Kind::Rest;
+    bool light = false;   // lowercase d / u: fewer strings, softer
+    bool accent = false;  // '>' prefix
+    // For Kind::Pick: guitar string numbers 1..6 (1 = high e). 0 = bass, -1 = alternate bass.
+    QVector<int> strings;
+    QString token;        // original text, used for display
+};
+
+struct Pattern
+{
+    QString name;
+    int subdivision = 2;  // steps per beat
+    QVector<PatternStep> steps;
+};
+
+// One bar of a section: which chord starts at which step.
+struct BarDef
+{
+    struct Slot { QString chord; double beats = 0.0; }; // beats <= 0: split the rest evenly
+    QVector<Slot> parts;
+};
+
+struct Section
+{
+    QString name;
+    QString pattern;      // pattern name
+    double bpm = 0.0;     // 0 = use the song tempo
+    int beatsPerBar = 0;  // 0 = use the song meter
+    QVector<BarDef> bars;
+};
+
+struct ArrangementItem
+{
+    QString section;
+    int repeat = 1;
+};
+
+struct Song
+{
+    QString filePath;
+    QString title;
+    QString artist;
+    double bpm = 90.0;
+    int beatsPerBar = 4;
+    int capo = 0;
+    std::array<int, 6> tuning{40, 45, 50, 55, 59, 64}; // MIDI notes, low E first
+
+    QVector<ChordShape> chords;       // chords defined in the file (override built-ins)
+    QVector<Pattern> patterns;
+    QVector<Section> sections;
+    QVector<ArrangementItem> arrangement;
+
+    const ChordShape *findChord(const QString &name) const;
+    int patternIndex(const QString &name) const;
+    int sectionIndex(const QString &name) const;
+};
+
+// Parses a pattern text such as "D - D U - U D U" or "B 3 2 >1 A 3 2+1 3".
+bool parsePatternSteps(const QString &text, QVector<PatternStep> *out, QString *error);
+
+// Loads and validates a song XML file.
+std::shared_ptr<Song> loadSong(const QString &path, QString *error);
+
+// A song flattened into a list of bars ready for playback.
+struct Timeline
+{
+    struct Bar
+    {
+        int play = 0;          // index into plays
+        int barInSection = 0;  // bar number within this pass of the section
+        double bpm = 90.0;
+        int beatsPerBar = 4;
+        int subdivision = 2;
+        int pattern = -1;      // index into song->patterns
+        QVector<int> chordAtStep; // index into chords, -1 = no chord
+
+        int stepCount() const { return beatsPerBar * subdivision; }
+    };
+
+    struct Play
+    {
+        QString section;
+        int pass = 1;          // 1-based repeat number
+        int passes = 1;
+        int firstBar = 0;
+        int barCount = 0;
+    };
+
+    std::shared_ptr<const Song> song;
+    QVector<ChordShape> chords;  // every chord used, resolved
+    QVector<Bar> bars;
+    QVector<Play> plays;
+
+    const PatternStep *stepAt(int bar, int step) const;
+};
+
+std::shared_ptr<Timeline> buildTimeline(std::shared_ptr<const Song> song, QString *error);

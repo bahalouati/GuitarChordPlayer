@@ -1,0 +1,50 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.*'
+          arch: 'win64_msvc2022_64'
+          modules: 'qtmultimedia'
+          cache: true
+      - name: Configure
+        run: cmake -S . -B build
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Package
+        run: |
+          cmake --install build --config Release --prefix dist
+          windeployqt --release --no-translations dist/GuitarChordPlayer.exe
+      - name: Smoke test (render every song to WAV)
+        shell: pwsh
+        run: |
+          Get-ChildItem songs/*.xml | ForEach-Object {
+            $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--render", $_.FullName, "$env:RUNNER_TEMP/$($_.BaseName).wav" -Wait -PassThru -NoNewWindow
+            if ($p.ExitCode -ne 0) { throw "Rendering $($_.Name) failed" }
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GuitarChordPlayer-windows
+          path: dist
+
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt
+        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev qt6-multimedia-dev libgl1-mesa-dev
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j4
+      - name: Smoke test (render every song to WAV)
+        run: for f in songs/*.xml; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav"; done

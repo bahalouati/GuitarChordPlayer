@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Original fingerpicking exercise. The thumb alternates bass notes (B and A)
+     on every beat while the fingers pick the treble strings in between. -->
+<song title="Travis Picking Study" artist="Guitar Chord Player" bpm="80" beatsPerBar="4">
+  <patterns>
+    <pattern name="travis" subdivision="2">B+1 3 A 2 B 3 A 2</pattern>
+    <pattern name="travis-pinch" subdivision="2">B+1 3 A 2 B+1 3 A 2</pattern>
+    <pattern name="slow" subdivision="2">B - 3 - A - 2 -</pattern>
+  </patterns>
+  <sections>
+    <section name="Warm-up (slow)" pattern="slow" bpm="70">
+      <bars>C | Am | F | G</bars>
+    </section>
+    <section name="A" pattern="travis">
+      <bars repeat="2">C | Am | F | G</bars>
+    </section>
+    <section name="B" pattern="travis-pinch">
+      <bars>F | C | G | Am | F | C | G | G7</bars>
+    </section>
+  </sections>
+  <arrangement>
+    <play section="Warm-up (slow)"/>
+    <play section="A"/>
+    <play section="B"/>
+    <play section="A"/>
+  </arrangement>
+</song>
