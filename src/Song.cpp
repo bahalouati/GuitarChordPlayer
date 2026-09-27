@@ -198,6 +198,24 @@ std::shared_ptr<Song> loadSong(const QString &path, QString *error)
     return loadSongFromData(f.readAll(), path, error);
 }
 
+QString audioElementXml(const QString &file, double offset, const QVector<double> &beats, int beatsPerBar,
+                        const QString &indent)
+{
+    const QString start = QStringLiteral("<audio file=\"%1\" offset=\"%2\"")
+            .arg(file.toHtmlEscaped(), QString::number(offset, 'f', 3));
+    if (beats.size() < 2)
+        return start + QStringLiteral("/>");
+    QString text = start + QStringLiteral(">\n") + indent + QStringLiteral("  <beats>\n");
+    const int perLine = qMax(1, beatsPerBar);
+    for (int i = 0; i < beats.size(); ++i) {
+        if (i % perLine == 0)
+            text += indent + QStringLiteral("    ");
+        text += QString::number(beats[i], 'f', 3);
+        text += (i + 1) % perLine == 0 || i + 1 == beats.size() ? QStringLiteral("\n") : QStringLiteral(" ");
+    }
+    return text + indent + QStringLiteral("  </beats>\n") + indent + QStringLiteral("</audio>");
+}
+
 std::shared_ptr<Song> loadSongFromData(const QByteArray &data, const QString &path, QString *error)
 {
     auto song = std::make_shared<Song>();
@@ -383,6 +401,19 @@ std::shared_ptr<Song> loadSongFromData(const QByteArray &data, const QString &pa
             song->audioFile = fi.isAbsolute() ? file
                                               : QFileInfo(path).absoluteDir().absoluteFilePath(file);
             song->audioOffset = a.value(QLatin1String("offset")).toDouble();
+        } else if (name == QLatin1String("beats")) {
+            // <beats> inside <audio>: beat times of the recording, in seconds.
+            const QString text = xml.readElementText(QXmlStreamReader::SkipChildElements);
+            song->audioBeats.clear();
+            for (const QString &t : text.split(QRegularExpression(QStringLiteral("[\\s|]+")), Qt::SkipEmptyParts)) {
+                bool ok = false;
+                const double v = t.toDouble(&ok);
+                if (!ok || (!song->audioBeats.isEmpty() && v <= song->audioBeats.last())) {
+                    fail(QStringLiteral("<beats> must be a list of increasing times in seconds, e.g. <beats>0.50 1.02 1.55</beats>"));
+                    break;
+                }
+                song->audioBeats << v;
+            }
         } else if (name == QLatin1String("play")) {
             ArrangementItem it;
             it.section = a.value(QLatin1String("section")).toString();
@@ -395,7 +426,7 @@ std::shared_ptr<Song> loadSongFromData(const QByteArray &data, const QString &pa
         } else if (name != QLatin1String("chords") && name != QLatin1String("patterns")
                    && name != QLatin1String("sections") && name != QLatin1String("arrangement")) {
             fail(QStringLiteral("Unknown tag <%1>. Allowed tags: song, chords, chord, patterns, pattern, "
-                                "sections, section, bars, bar, line, arrangement, play, audio").arg(name.toString()));
+                                "sections, section, bars, bar, line, arrangement, play, audio, beats").arg(name.toString()));
         }
     }
 
@@ -541,6 +572,18 @@ std::shared_ptr<Timeline> buildTimeline(std::shared_ptr<const Song> song, QStrin
                 }
                 tl->bars << bar;
             }
+        }
+    }
+
+    // A recording whose tempo moves: each bar takes its tempo from the recording's beats.
+    if (song->audioBeats.size() >= 2) {
+        const QVector<double> &bt = song->audioBeats;
+        int beat = 0;
+        for (Timeline::Bar &bar : tl->bars) {
+            const int end = beat + bar.beatsPerBar;
+            if (end < bt.size() && bt[end] > bt[beat])
+                bar.bpm = bar.beatsPerBar * 60.0 / (bt[end] - bt[beat]);
+            beat = end;
         }
     }
 

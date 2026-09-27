@@ -73,6 +73,9 @@ struct Song
     // Optional recording to play along with: <audio file="song.mp3" offset="0.35"/>
     QString audioFile;      // absolute path (resolved against the song file's folder)
     double audioOffset = 0; // seconds into the recording where bar 1 starts
+    // Optional <beats> inside <audio>: when the recording's tempo moves, the time of every beat
+    // from bar 1 on. Only the gaps count (each bar's tempo); offset still says where bar 1 is.
+    QVector<double> audioBeats;
     std::array<int, 6> tuning{40, 45, 50, 55, 59, 64}; // MIDI notes, low E first
 
     QVector<ChordShape> chords;       // chords defined in the file (override built-ins)
@@ -99,6 +102,11 @@ const QVector<PatternPreset> &patternPresets();
 
 // Parses a pattern text such as "D - D U - U D U" or "B 3 2 >1 A 3 2+1 3".
 bool parsePatternSteps(const QString &text, QVector<PatternStep> *out, QString *error);
+
+// The <audio> element for a song file: <audio file=".." offset=".."/>, or with a <beats> list
+// (one bar per line) when the recording's tempo moves. indent = indentation of the element.
+QString audioElementXml(const QString &file, double offset, const QVector<double> &beats, int beatsPerBar,
+                        const QString &indent = QStringLiteral("  "));
 
 // Loads and validates a song XML file.
 std::shared_ptr<Song> loadSong(const QString &path, QString *error);

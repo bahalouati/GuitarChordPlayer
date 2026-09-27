@@ -25,11 +25,24 @@ without changing its pitch. The mixer switches the guitar and the recording on a
 volumes. **Sync** nudges the recording a few milliseconds earlier or later if needed, and is saved with the song.
 
 **New song from an MP3.** *File → New song from MP3 (Ctrl+I)* listens to a recording and writes the song for you. It
-finds the tempo, the beats, the bar lines (4/4 or 3/4) and the chords (major and minor), picks an easy capo position,
-and saves the song with the recording attached so you can play along right away. Besides major and minor it
+finds the tempo, the beats, the bar lines (4/4 or 3/4) and the chords, picks an easy capo position, and saves the
+song with the recording attached so you can play along right away. It is made for real songs with a singer, drums
+and bass: the drums are filtered out before the chords are worked out, and the chords are read over whole beats so
+the notes of the tune don't get mistaken for chord notes. Chord changes are placed on the beat where they happen
+(`C:3 G:1` when a chord lasts three beats). If the band speeds up or slows down (no click track), the song keeps the
+time of every beat, so the guitar follows the recording instead of drifting away from it. Besides major and minor it
 recognises 7, m7, maj7, sus2, sus4, dim and aug chords (switch this off under *Settings* for major/minor only, or use
-the Chords menu to simplify them while playing). On test recordings with drums, bass and a melody it gets the right major/minor chord about 92% of the time, and the exact chord (including 7ths and sus chords) about 75% of the time. Real songs vary, so fix any wrong chord by
-ear in the live editor while it plays. *File → Attach recording to this song* adds a recording to an existing song.
+the Chords menu to simplify them while playing).
+
+How often it is right (share of the song's time with the correct chord):
+
+| Test recordings | Major/minor right | Exact chord right |
+|---|---|---|
+| Pop songs with a singing voice, drums, bass, piano/guitar (made for testing, `scripts/make_test_song.py`) | 94% | 80% |
+| Band recordings from the AAM data set (drums, bass, several instruments, melody) | 87% | 79% |
+| Solo guitar from GuitarSet (real recordings, a lot of jazz and bossa nova) | 64% | 54% |
+
+Real songs vary, so fix any wrong chord by ear in the live editor while it plays. *File → Attach recording to this song* adds a recording to an existing song.
 It finds where bar 1 starts and offers the recording's tempo if it differs from the song's.
 
 **Capo and easier chords.** The **Capo** menu plays a song with a different capo: it sounds the same, only the
@@ -326,6 +339,21 @@ examples shows how it works.
 It can be negative if the song starts before the recording. The Sync control in the mixer changes it for you.
 Keep the song's tempo steady (one `bpm`) for songs with a recording. Sections with a different `bpm` work too,
 as long as the recording really changes tempo there.
+
+When the recording's tempo moves (a band playing without a click track), *New song from MP3* also writes the time of
+every beat, one bar per line:
+
+```xml
+<audio file="my song.mp3" offset="0.492">
+  <beats>
+    0.492 0.961 1.430 1.899
+    2.368 2.837 3.306 3.775
+  </beats>
+</audio>
+```
+
+Each bar then plays at the recording's tempo for that bar, and `bpm` is only used after the last beat. Only the gaps
+between the beats count: Sync still moves everything together through `offset`.
 
 ### `<arrangement>`
 

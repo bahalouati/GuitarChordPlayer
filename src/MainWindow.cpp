@@ -1099,14 +1099,16 @@ void MainWindow::applyRecording(bool songChanged)
     m_syncMs->setValue(m_song ? int(std::lround(m_song->audioOffset * 1000)) : 0);
 }
 
-// Replaces (or adds) the <audio .../> element of a song file's text.
-static QString withAudioElement(QString xml, const QString &file, double offset)
+// Replaces (or adds) the <audio> element of a song file's text.
+static QString withAudioElement(QString xml, const QString &file, double offset, const QVector<double> &beats,
+                                int beatsPerBar)
 {
-    const QString element = QStringLiteral("<audio file=\"%1\" offset=\"%2\"/>")
-            .arg(file.toHtmlEscaped(), QString::number(offset, 'f', 3));
-    static const QRegularExpression existing(QStringLiteral("<audio\\b[^>]*/>"));
-    if (xml.contains(existing))
-        return xml.replace(existing, element);
+    const QString element = audioElementXml(file, offset, beats, beatsPerBar);
+    static const QRegularExpression existing(QStringLiteral("<audio\\b[^>]*/>|<audio\\b[^>]*[^/]>.*?</audio>"),
+                                             QRegularExpression::DotMatchesEverythingOption);
+    const auto em = existing.match(xml);
+    if (em.hasMatch())
+        return xml.replace(int(em.capturedStart()), int(em.capturedLength()), element);
     static const QRegularExpression songTag(QStringLiteral("<song\\b[^>]*>"));
     const auto m = songTag.match(xml);
     if (!m.hasMatch())
@@ -1127,7 +1129,8 @@ void MainWindow::saveAudioOffset()
     const auto m = fileAttr.match(xml);
     if (!m.hasMatch())
         return;
-    const QString updated = withAudioElement(xml, m.captured(1), m_song->audioOffset);
+    const QString updated = withAudioElement(xml, m.captured(1), m_song->audioOffset, m_song->audioBeats,
+                                             m_song->beatsPerBar);
     if (updated == xml || !f.open(QIODevice::WriteOnly | QIODevice::Truncate))
         return;
     f.write(updated.toUtf8());
@@ -1257,7 +1260,7 @@ void MainWindow::attachRecording()
         return;
     QString xml = QString::fromUtf8(f.readAll());
     f.close();
-    xml = withAudioElement(xml, audioName, detected.offset);
+    xml = withAudioElement(xml, audioName, detected.offset, detected.beats, detected.beatsPerBar);
     // Offer the recording's tempo if the song's differs noticeably.
     if (std::abs(detected.bpm - m_song->bpm) / m_song->bpm > 0.03) {
         const auto r = QMessageBox::question(this, tr("Attach recording"),
