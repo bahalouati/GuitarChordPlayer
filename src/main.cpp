@@ -5,6 +5,7 @@
 #include "Translator.h"
 #include "AudioTrack.h"
 #include "ChordDetector.h"
+#include "PdfExport.h"
 
 #include <QFileInfo>
 
@@ -40,6 +41,30 @@ int main(int argc, char *argv[])
                               : toneName == "electric" ? GuitarTone::Electric : GuitarTone::Acoustic;
         if (!tl || !exportSongToWav(tl, QString::fromLocal8Bit(argv[3]), 1.0, &error, clip, song->audioOffset, tone)) {
             err << "Error: " << error << Qt::endl;
+            return 1;
+        }
+        return 0;
+    }
+
+    // Chord sheets: GuitarChordPlayer --pdf out.pdf song.xml [more.xml ...]
+    if (argc >= 4 && QString::fromLocal8Bit(argv[1]) == QLatin1String("--pdf")) {
+#ifdef Q_OS_LINUX
+        // Printing needs fonts but no screen.
+        if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM") && qEnvironmentVariableIsEmpty("DISPLAY")
+            && qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY"))
+            qputenv("QT_QPA_PLATFORM", "offscreen");
+#endif
+        QApplication app(argc, argv);
+        // Headings in the language chosen in the app.
+        QApplication::setOrganizationName(QStringLiteral("GuitarChordPlayer"));
+        QApplication::setApplicationName(QStringLiteral("GuitarChordPlayer"));
+        installLanguage(app);
+        QStringList songs;
+        for (int i = 3; i < argc; ++i)
+            songs << QString::fromLocal8Bit(argv[i]);
+        QString error;
+        if (!exportSongsToPdf(songs, QString::fromLocal8Bit(argv[2]), &error)) {
+            QTextStream(stderr) << "Error: " << error << Qt::endl;
             return 1;
         }
         return 0;

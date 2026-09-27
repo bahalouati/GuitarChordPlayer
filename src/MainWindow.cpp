@@ -13,7 +13,10 @@
 #include "SongEditor.h"
 #include "Updater.h"
 #include "WavWriter.h"
+#include "PdfExport.h"
 
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QAction>
 #include <QActionGroup>
 #include <QApplication>
@@ -443,6 +446,7 @@ void MainWindow::buildMenus()
     });
     file->addSeparator();
     file->addAction(tr("&Export as WAV..."), this, &MainWindow::exportWav);
+    file->addAction(tr("Export chord sheets as &PDF..."), QKeySequence(Qt::CTRL | Qt::Key_P), this, &MainWindow::exportPdf);
     file->addSeparator();
     file->addAction(tr("&Quit"), QKeySequence::Quit, qApp, &QApplication::quit);
 
@@ -1004,6 +1008,107 @@ void MainWindow::reloadSong()
     if (m_song)
         loadSongFile(m_song->filePath, true);
     refreshSongList();
+}
+
+void MainWindow::exportPdf()
+{
+    // Pick the songs: the same list as the sidebar, with the current song ticked.
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("Export chord sheets as PDF"));
+    auto *layout = new QVBoxLayout(&dlg);
+    layout->addWidget(new QLabel(tr("Each song gets its chords three ways: as written, Simplify and Simplify+ (with "
+                                    "its capo), above the lyrics. Songs without lyrics get empty lines to write on."),
+                                 &dlg));
+    layout->itemAt(0)->widget()->setProperty("wordWrap", true);
+    auto *list = new QListWidget(&dlg);
+    for (int i = 0; i < m_songList->count(); ++i) {
+        const QListWidgetItem *src = m_songList->item(i);
+        const QString path = src->data(Qt::UserRole).toString();
+        if (path == QLatin1String("new"))
+            continue;
+        auto *it = new QListWidgetItem(src->text().trimmed(), list);
+        it->setFont(src->font());
+        if (path.isEmpty()) {
+            it->setFlags(Qt::ItemIsEnabled); // a folder heading
+        } else {
+            it->setData(Qt::UserRole, path);
+            it->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
+            it->setCheckState(m_song && QFileInfo(path).canonicalFilePath() == QFileInfo(m_song->filePath).canonicalFilePath()
+                                  ? Qt::Checked : Qt::Unchecked);
+        }
+    }
+    layout->addWidget(list);
+    auto *row = new QHBoxLayout;
+    auto *all = new QPushButton(tr("Select all"), &dlg);
+    auto *none = new QPushButton(tr("Select none"), &dlg);
+    auto setAll = [list](Qt::CheckState st) {
+        for (int i = 0; i < list->count(); ++i)
+            if (list->item(i)->flags() & Qt::ItemIsUserCheckable)
+                list->item(i)->setCheckState(st);
+    };
+    connect(all, &QPushButton::clicked, &dlg, [setAll] { setAll(Qt::Checked); });
+    connect(none, &QPushButton::clicked, &dlg, [setAll] { setAll(Qt::Unchecked); });
+    row->addWidget(all);
+    row->addWidget(none);
+    row->addStretch();
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    buttons->button(QDialogButtonBox::Ok)->setText(tr("Export..."));
+    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+    row->addWidget(buttons);
+    layout->addLayout(row);
+    dlg.resize(460, 560);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    QStringList files;
+    QString firstTitle;
+    for (int i = 0; i < list->count(); ++i)
+        if (list->item(i)->checkState() == Qt::Checked) {
+            files << list->item(i)->data(Qt::UserRole).toString();
+            if (firstTitle.isEmpty())
+                firstTitle = list->item(i)->text();
+        }
+    if (files.isEmpty()) {
+        QMessageBox::information(this, tr("Export chord sheets as PDF"), tr("Tick at least one song."));
+        return;
+    }
+    if (m_editor->isModified() && files.contains(m_editor->filePath()))
+        QMessageBox::information(this, tr("Export chord sheets as PDF"),
+                                 tr("The song open in the editor has unsaved changes. The PDF uses the saved file."));
+
+    QString name = files.size() == 1 ? firstTitle : tr("Songbook");
+    name.replace(QRegularExpression(QStringLiteral("[\\\\/:*?\"<>|]")), QStringLiteral("_"));
+    const QString docs = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    const QString path = QFileDialog::getSaveFileName(this, tr("Export chord sheets as PDF"),
+                                                      (docs.isEmpty() ? QDir::homePath() : docs) + QLatin1Char('/')
+                                                              + name + QStringLiteral(".pdf"),
+                                                      tr("PDF files (*.pdf)"));
+    if (path.isEmpty())
+        return;
+    QProgressDialog progress(tr("Writing the PDF..."), tr("Cancel"), 0, int(files.size()), this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(300);
+    QString err;
+    const bool ok = exportSongsToPdf(files, path, &err, [&progress](int i) {
+        progress.setValue(i);
+        QCoreApplication::processEvents();
+        return !progress.wasCanceled();
+    });
+    progress.setValue(int(files.size()));
+    if (!ok) {
+        if (!progress.wasCanceled())
+            QMessageBox::warning(this, tr("Export failed"), err);
+        return;
+    }
+    m_status->setText(tr("Exported %1").arg(path));
+    QMessageBox box(QMessageBox::Information, tr("Export chord sheets as PDF"),
+                    tr("Saved %n song(s) to %1", nullptr, int(files.size())).arg(QDir::toNativeSeparators(path)),
+                    QMessageBox::Close, this);
+    QPushButton *open = box.addButton(tr("Open PDF"), QMessageBox::AcceptRole);
+    box.exec();
+    if (box.clickedButton() == open)
+        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
 }
 
 void MainWindow::exportWav()

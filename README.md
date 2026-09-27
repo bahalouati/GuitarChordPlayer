@@ -45,6 +45,13 @@ How often it is right (share of the song's time with the correct chord):
 Real songs vary, so fix any wrong chord by ear in the live editor while it plays. *File → Attach recording to this song* adds a recording to an existing song.
 It finds where bar 1 starts and offers the recording's tempo if it differs from the song's.
 
+**Print chord sheets (PDF).** *File → Export chord sheets as PDF (Ctrl+P)* prints one song or a whole songbook:
+tick the songs in the list. Each song starts on a new page with three boxes of chord charts, **N** the chords as
+written, **S** Simplify and **S+** Simplify+ (with the capo it picks), followed by every line of the song with the
+three versions of its chords stacked above the words, bar by bar. A chord that is the same as in the row above is
+printed faded, so the changes stand out. Songs without lyrics get an empty line under the chords to write the words
+on. Arabic lyrics run right to left. From the command line: `GuitarChordPlayer --pdf out.pdf song.xml [more.xml ...]`.
+
 **Capo and easier chords.** The **Capo** menu plays a song with a different capo: it sounds the same, only the
 chord shapes change. **Auto** picks the capo with the easiest shapes, and the choice is remembered per song. The
 **Chords** menu makes songs easier to play:

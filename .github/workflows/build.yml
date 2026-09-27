@@ -40,6 +40,9 @@ jobs:
           # Chord detection round trip: render a song, then detect its chords from the WAV.
           $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--detect", "$env:RUNNER_TEMP/pop_practice.wav", "$env:RUNNER_TEMP/detected.xml" -Wait -PassThru -NoNewWindow
           if ($p.ExitCode -ne 0) { throw "Chord detection failed" }
+          # PDF chord sheets from the packaged app.
+          $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--pdf", "$env:RUNNER_TEMP/songbook.pdf", "songs/amazing_grace.xml", "songs/spacetoon/remi.xml" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0 -or -not (Test-Path "$env:RUNNER_TEMP/songbook.pdf")) { throw "PDF export failed" }
       - name: Build installer
         shell: pwsh
         run: |
@@ -80,7 +83,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Qt
-        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev qt6-multimedia-dev libgl1-mesa-dev
+        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev qt6-multimedia-dev qt6-qpa-plugins libgl1-mesa-dev
       - name: Build
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -92,5 +95,9 @@ jobs:
           ./build/GuitarChordPlayer --decode "tests/data/tone with cover (1).mp3"
       - name: Chord detection accuracy (sung test song with drums and a drifting tempo)
         run: python3 scripts/check_detection.py ./build/GuitarChordPlayer
+      - name: PDF chord sheets (every song in one file)
+        run: |
+          find songs -name '*.xml' -print0 | xargs -0 ./build/GuitarChordPlayer --pdf /tmp/songbook.pdf
+          head -c 5 /tmp/songbook.pdf | grep -q '%PDF-'
       - name: Translations (lists interface text without an Arabic translation)
         run: python3 scripts/check_translations.py
