@@ -34,7 +34,11 @@ int main(int argc, char *argv[])
             if (!clip)
                 err << "Warning: recording not loaded: " << error << Qt::endl;
         }
-        if (!tl || !exportSongToWav(tl, QString::fromLocal8Bit(argv[3]), 1.0, &error, clip, song->audioOffset)) {
+        // GCP_TONE=acoustic|nylon|electric picks the guitar for command-line renders.
+        const QByteArray toneName = qgetenv("GCP_TONE");
+        const GuitarTone tone = toneName == "nylon" ? GuitarTone::Nylon
+                              : toneName == "electric" ? GuitarTone::Electric : GuitarTone::Acoustic;
+        if (!tl || !exportSongToWav(tl, QString::fromLocal8Bit(argv[3]), 1.0, &error, clip, song->audioOffset, tone)) {
             err << "Error: " << error << Qt::endl;
             return 1;
         }

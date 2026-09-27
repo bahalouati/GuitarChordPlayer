@@ -45,6 +45,7 @@ public:
     void setMetronome(bool on) { m_metronome = on; }
     void setCountIn(bool on) { m_countInEnabled = on; }
     void setVolume(float v) { m_volume = v; }
+    void setTone(GuitarTone tone) { m_synth.setTone(tone); }
 
     // Recording played along with the guitar. offset = where bar 1 starts in the recording (seconds).
     void setAudio(std::shared_ptr<const AudioClip> clip, double offset);

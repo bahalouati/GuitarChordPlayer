@@ -48,10 +48,14 @@ Song files and chord sheets may also spell chords in Arabic or solfège (`لا �
 `Lam`, `Fa#m`); they are shown as Am, Bb, G7, F#m...
 
 The guitar sound is generated in real time, so no audio files are needed and any chord or pattern you write just
-plays. Each string is a physical model: two slightly detuned vibrating polarizations, frequency-dependent damping,
-string stiffness on the wound strings, and a pick attack. The strums take a realistic time across the strings,
-speed up as the pick moves, and vary in timing and strength like a human player. The sound gets guitar body
-resonance and a small stereo room.
+plays. It uses *commuted synthesis*, the classic technique for realistic plucked strings. Each pluck feeds the impulse
+response of a guitar body into the string: the body's air resonance near 100 Hz, its top-plate resonances around 200 Hz,
+and many smaller wood resonances up to a few kHz. The response is shaped first by the pick (harder picking sounds
+brighter) and by where the string is plucked. The string itself has two slightly detuned vibrations,
+frequency-dependent damping and stiffness on the wound strings. *Settings → Guitar sound* chooses
+**Acoustic (steel strings)** (the default), **Classical (nylon strings)** or **Electric (clean)**. Strums take a
+realistic time across the strings, speed up as the pick moves, and vary in timing and strength like a human player,
+and a small stereo room is added.
 
 ## Adding your own songs
 
@@ -366,7 +370,7 @@ finger would.
 | `src/Translator.*`, `resources/i18n/ar.json` | Arabic interface (`scripts/check_translations.py` lists missing strings) |
 | `src/LlmPrompt.*`, `docs/LLM_PROMPT.md` | The LLM prompt (embedded in the app) and reading LLM answers |
 | `src/ChordLibrary.*` | Built-in chord shapes, name normalisation, generated barre chords |
-| `src/GuitarSynth.*` | Physically modelled strings, pick noise, body resonance, room reverb, metronome |
+| `src/GuitarSynth.*` | Commuted-synthesis guitar (body impulse response, pick, strings), tones, room reverb, metronome |
 | `src/Sequencer.*` | Sample-accurate playback: patterns → strums/picks, recording sync, loop, count-in |
 | `src/AudioEngine.*` | `QAudioSink` in pull mode; converts output latency into what you actually hear |
 | `src/ChordDiagramWidget.*`, `src/PatternWidget.*` | Custom-painted views |

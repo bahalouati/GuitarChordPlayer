@@ -223,6 +223,13 @@ void AudioEngine::setGuitarEnabled(bool on)
     m_seq.setGuitarEnabled(on);
 }
 
+void AudioEngine::setTone(GuitarTone tone)
+{
+    QMutexLocker l(&m_mutex);
+    m_tone = tone;
+    m_seq.setTone(tone);
+}
+
 void AudioEngine::previewChord(const ChordShape &chord)
 {
     QMutexLocker l(&m_mutex);
