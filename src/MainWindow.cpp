@@ -406,16 +406,31 @@ void MainWindow::refreshSongList()
         }
     };
 
+    // Each sub-folder (e.g. songs/spacetoon) gets its own heading.
+    auto addSubFolders = [&](const QString &dirPath) {
+        const QDir dir(dirPath);
+        for (const QString &sub : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
+            QString name = sub;
+            name.replace(QLatin1Char('_'), QLatin1Char(' '));
+            if (!name.isEmpty())
+                name[0] = name[0].toUpper();
+            addHeader(name);
+            addFolder(dir.absoluteFilePath(sub));
+        }
+    };
+
     addHeader(tr("My Songs"));
     auto *add = new QListWidgetItem(tr("   + Create a new song..."));
     add->setData(Qt::UserRole, QStringLiteral("new"));
     add->setForeground(QColor(40, 120, 220));
     m_songList->addItem(add);
     addFolder(userSongsDir());
+    addSubFolders(userSongsDir());
     const QString examples = examplesDir();
     if (QDir(examples).absolutePath() != QDir(userSongsDir()).absolutePath()) {
         addHeader(tr("Examples"));
         addFolder(examples);
+        addSubFolders(examples);
     }
 }
 

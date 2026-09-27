@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أسرار المحيط - Nadia: The Secret of Blue Water, Spacetoon. Chords from Guitarabia (song 1349, by Ali Rivol).
+     The chords change fast, so start with the tempo slider at 70%.
+     Bar lengths and tempo are approximate. Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أسرار المحيط - Asrar Al Muhit" artist="Spacetoon" bpm="120" beatsPerBar="4" pattern="drive">
+  <sections>
+    <section name="Verse">
+      <bars>Dm | C Dm | Dm | C Dm | C Gm | Dm</bars>
+      <bars repeat="2">Bb C | Dm</bars>
+    </section>
+    <section name="Chorus">
+      <bars>Dm | C Dm | Am Bb | C F | Dm C | Gm | Am Bb | C F</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Dm | Dm</bars>
+    </section>
+  </sections>
+</song>

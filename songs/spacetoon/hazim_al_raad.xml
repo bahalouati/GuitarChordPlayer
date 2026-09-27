@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- هزيم الرعد - Spacetoon. Chords from Ultimate Guitar (tab 4456148), originally
+     Fm Eb Bbm Db. Played here with capo 1 as Em D Am C: it sounds the same, with no barre chords.
+     Bar lengths and tempo are approximate. Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="هزيم الرعد - Hazim Al Raad" artist="Spacetoon" bpm="128" beatsPerBar="4" capo="1" pattern="drive">
+  <sections>
+    <section name="Intro" pattern="rock">
+      <bars repeat="2">D | Em</bars>
+    </section>
+    <section name="Verse">
+      <bars repeat="4">Em | D | Am | Em</bars>
+    </section>
+    <section name="Chorus" pattern="rock">
+      <bars repeat="2">Em | Am | D | C</bars>
+    </section>
+    <section name="Bridge">
+      <bars>Am | Em | Am | Em</bars>
+      <bars>Em C | D Em | Am | Em</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Em | Em</bars>
+    </section>
+  </sections>
+  <arrangement>
+    <play section="Intro"/>
+    <play section="Verse"/>
+    <play section="Chorus"/>
+    <play section="Bridge"/>
+    <play section="Chorus"/>
+    <play section="Verse"/>
+    <play section="Chorus"/>
+    <play section="Ending"/>
+  </arrangement>
+</song>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أمي كم أهواها - Omi Kam Ahwaha (Remi), Spacetoon. Chords from Guitarabia (song 1269).
+     Every line of the song uses Am E Dm Am. Bar lengths and tempo are approximate.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أمي كم أهواها - Omi Kam Ahwaha" artist="Spacetoon" bpm="80" beatsPerBar="4" pattern="ballad">
+  <sections>
+    <section name="Chorus">
+      <bars repeat="2">Am E | Dm Am</bars>
+    </section>
+    <section name="Verse 1" pattern="arpeggio">
+      <bars repeat="2">Am E | Dm Am</bars>
+    </section>
+    <section name="Verse 2" pattern="arpeggio">
+      <bars repeat="2">Am E | Dm Am</bars>
+    </section>
+    <section name="Verse 3" pattern="arpeggio">
+      <bars repeat="2">Am E | Dm Am</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Am | Am</bars>
+    </section>
+  </sections>
+  <arrangement>
+    <play section="Chorus" repeat="2"/>
+    <play section="Verse 1"/>
+    <play section="Chorus"/>
+    <play section="Verse 2"/>
+    <play section="Chorus"/>
+    <play section="Verse 3"/>
+    <play section="Chorus" repeat="2"/>
+    <play section="Ending"/>
+  </arrangement>
+</song>
