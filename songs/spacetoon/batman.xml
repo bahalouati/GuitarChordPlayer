@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- بات مان (Batman) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/bu6EBd3rPmI
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="بات مان - Batman" artist="Spacetoon" bpm="122" beatsPerBar="4" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>D | C | D | C</bars>
+      <bars>C | E C | D | E C</bars>
+    </section>
+    <section name="Part 2">
+      <bars>D | E Am | D | E C</bars>
+      <bars>Dm | C | Dm | C</bars>
+    </section>
+    <section name="Part 3">
+      <bars>D | A D | G | F G</bars>
+      <bars>D | C | D | C D</bars>
+    </section>
+    <section name="Part 4">
+      <bars>D | E C | D | E A</bars>
+      <bars>A Bb | Bb | Bb | Bb A</bars>
+    </section>
+    <section name="Part 5">
+      <bars>D | C | D A | C</bars>
+      <bars>Am | C | Am | C</bars>
+    </section>
+    <section name="Part 6">
+      <bars>D</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>D</bars>
+    </section>
+  </sections>
+</song>

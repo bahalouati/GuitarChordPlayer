@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- القناص - Hunter x Hunter, Spacetoon opening (sung by Rasha Rizk).
+     Chords from Ultimate Guitar (tab 3445247). Bar lengths and tempo are approximate.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="القناص - Hunter x Hunter" artist="Spacetoon (Rasha Rizk)" bpm="132" beatsPerBar="4" pattern="drive">
+  <sections>
+    <section name="Intro" pattern="whole">
+      <bars>Em | Em</bars>
+    </section>
+    <section name="Verse">
+      <bars>Am | Am | G | G | F | F | Em | Dm</bars>
+      <bars>Am | Am | F | F | G | G | G | F | E | D C</bars>
+    </section>
+    <section name="Chorus" pattern="rock">
+      <bars>G | Am | F | F | G | G</bars>
+      <bars>G | Am | F | F | G | G</bars>
+      <bars>Dm | Dm | Dm | Dm | F | F | Am | G</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Am | Am</bars>
+    </section>
+  </sections>
+</song>

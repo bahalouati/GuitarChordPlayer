@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أبطال الديجتال - Digimon, Spacetoon opening. Chords from Ultimate Guitar (Misc Cartoons, Digimon Spacetoon Theme).
+     Bar lengths and tempo are approximate. Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أبطال الديجتال - Digimon" artist="Spacetoon" bpm="150" beatsPerBar="4" pattern="rock">
+  <sections>
+    <section name="Intro">
+      <bars repeat="4">E | E | D | D</bars>
+    </section>
+    <section name="Verse" pattern="drive">
+      <bars repeat="2">E | E | G#m | G#m | A | A | C D | E</bars>
+    </section>
+    <section name="Pre-chorus" pattern="pop">
+      <bars>C#m | G#m | A | E | C#m | G#m | A B | C D | B | A B</bars>
+    </section>
+    <section name="Chorus">
+      <bars>E B | C#m | G#m | A | E | C#m | A | B</bars>
+      <bars>E B | C#m | G#m | A | E | C#m | C D | E</bars>
+    </section>
+    <section name="Outro">
+      <bars repeat="3">E | E | D | D</bars>
+      <bars>E | E</bars>
+    </section>
+  </sections>
+</song>

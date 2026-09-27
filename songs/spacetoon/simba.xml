@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- سيمبا (Simba) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/EQuHkjt4WhQ
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 3: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="سيمبا - Simba" artist="Spacetoon" bpm="108" beatsPerBar="4" capo="3" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>Em | Em | Em | Em</bars>
+      <bars>C Em | Am | Am | Am</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Am Bm | E | A Em | Em D</bars>
+      <bars>E | Em D | Em D | Em D</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Em D | Em D | Em D | Em D</bars>
+      <bars>Em D | Em | Em | Em</bars>
+    </section>
+    <section name="Part 4">
+      <bars>C Em | Am | Am | Am</bars>
+      <bars>Am Bm | Bm | Bm | E</bars>
+    </section>
+    <section name="Part 5">
+      <bars>Em | Em D | E D | Em D</bars>
+      <bars>Em D | Em D | Em D | Em D</bars>
+    </section>
+    <section name="Part 6">
+      <bars>Em D | Em | Em | Em</bars>
+      <bars>Em | Em D | D | D</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>D</bars>
+    </section>
+  </sections>
+</song>

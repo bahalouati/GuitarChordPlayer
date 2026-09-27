@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- إيميلي (Emily) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/_McjTc1Qp9s
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="إيميلي - Emily" artist="Spacetoon" bpm="109" beatsPerBar="4" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>B | Eb E | Bm | Bm</bars>
+      <bars>Bm | Bm Em | Em | G</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Em | Em D | A | Bm</bars>
+      <bars>G Em | C D | G | G B</bars>
+    </section>
+    <section name="Part 3">
+      <bars>G Em | C D | G Em | D Em</bars>
+      <bars>Em D | Em Bm | Em | Em</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Em | Bm Em | Em | G D</bars>
+      <bars>Em | Em D | B Em | Bm</bars>
+    </section>
+    <section name="Part 5">
+      <bars>G Eb | G# A | G G#m | E D</bars>
+      <bars>G Bm | C D | G | D Em</bars>
+    </section>
+    <section name="Part 6">
+      <bars>Em | E</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>E</bars>
+    </section>
+  </sections>
+</song>

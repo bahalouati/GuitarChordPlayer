@@ -7,6 +7,8 @@
 
 ChordDiagramWidget::ChordDiagramWidget(QWidget *parent) : QWidget(parent)
 {
+    // Diagrams and timelines read left to right in every language.
+    setLayoutDirection(Qt::LeftToRight);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
@@ -56,6 +58,9 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
     double y = r.top();
     if (!m_caption.isEmpty()) {
         f.setPointSizeF(std::max(8.0, r.height() * 0.04));
+        // Shrink the caption until it fits the width.
+        while (f.pointSizeF() > 6.0 && QFontMetricsF(f).horizontalAdvance(m_caption) > r.width())
+            f.setPointSizeF(f.pointSizeF() - 0.5);
         p.setFont(f);
         p.setPen(fg);
         p.drawText(QRectF(r.left(), y, r.width(), r.height() * 0.07), Qt::AlignCenter, m_caption);
@@ -203,7 +208,12 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
             p.drawEllipse(ctr, dotR + 2, dotR + 2);
         }
         const int finger = c.fingers[size_t(i)];
-        if (finger > 0 && (!inBarre[size_t(i)] || i == 0 || c.fingers[size_t(i - 1)] != finger)) {
+        // Label a barre only once, on its lowest string.
+        bool firstOfBarre = true;
+        for (int j = 0; j < i; ++j)
+            if (inBarre[size_t(j)] && c.fingers[size_t(j)] == finger && c.frets[size_t(j)] == fr)
+                firstOfBarre = false;
+        if (finger > 0 && (!inBarre[size_t(i)] || firstOfBarre)) {
             p.setPen(Qt::white);
             p.drawText(QRectF(ctr.x() - dotR, ctr.y() - dotR, 2 * dotR, 2 * dotR), Qt::AlignCenter,
                        finger == 5 ? QStringLiteral("T") : QString::number(finger));

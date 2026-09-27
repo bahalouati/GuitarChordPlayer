@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- المقاتل النبيل (Al Muqatil Al Nabil) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/pcrSBmF9zh4
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 4: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="المقاتل النبيل - Al Muqatil Al Nabil" artist="Spacetoon" bpm="162" beatsPerBar="4" capo="4" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>Em | Em G | G | D</bars>
+      <bars>Bm | Bm Em | Em | C#</bars>
+    </section>
+    <section name="Part 2">
+      <bars>D | G Em | Em | Em D</bars>
+      <bars>Am Em | Em | Em | Em</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Em | Em | C | C G</bars>
+      <bars>G | B Em | Em | Em</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Em | Em | Em | C</bars>
+      <bars>D | D Em | Em | G</bars>
+    </section>
+    <section name="Part 5">
+      <bars>Em | Em G | G | C</bars>
+      <bars>G | G Eb | Eb F | F</bars>
+    </section>
+    <section name="Part 6">
+      <bars>C | C G | G Am | Am F</bars>
+      <bars>C | C Am | F | G Am</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Am F | F C | C | C F</bars>
+      <bars>G C | C | G | G C</bars>
+    </section>
+    <section name="Part 8">
+      <bars>G | G | G</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>G</bars>
+    </section>
+  </sections>
+</song>

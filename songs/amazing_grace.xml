@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Traditional hymn (public domain), a waltz in 3/4. -->
+<!-- Traditional hymn (public domain), a waltz in 3/4. Lyrics by John Newton (1779),
+     last verse by John P. Rees (1859). Each "|" in a lyric line starts the next bar. -->
 <song title="Amazing Grace" artist="Traditional (John Newton)" bpm="84" beatsPerBar="3">
   <patterns>
     <!-- Bass note on 1, strums on 2 and 3: "boom - chick chick" -->
@@ -11,13 +12,23 @@
     <section name="Intro" pattern="pick">
       <bars>G | G | C | G</bars>
     </section>
-    <section name="Verse" pattern="waltz">
-      <bars>G | G | C | G | G | G | D | D</bars>
-      <bars>G | G/B | C | G | G | D | G | G</bars>
+    <section name="Verse 1" pattern="waltz">
+      <line chords="G | G | C | G">A-mazing | grace, how | sweet the | sound that</line>
+      <line chords="G | G | D | D">saved a | wretch like | me. | I</line>
+      <line chords="G | G/B | C | G">once was | lost, but | now am | found, was</line>
+      <line chords="G | D | G | G">blind, but | now I | see. | </line>
+    </section>
+    <section name="Verse 2" pattern="waltz">
+      <line chords="G | G | C | G">'Twas grace that | taught my | heart to | fear, and</line>
+      <line chords="G | G | D | D">grace my | fears re- | lieved. | How</line>
+      <line chords="G | G/B | C | G">precious | did that | grace ap- | pear the</line>
+      <line chords="G | D | G | G">hour I | first be- | lieved. | </line>
     </section>
     <section name="Last verse" pattern="pick" bpm="76">
-      <bars>G | G | C | G | G | G | D | D</bars>
-      <bars>G | G/B | C | G | G | D | G | %</bars>
+      <line chords="G | G | C | G">When we've been | there ten | thousand | years, bright</line>
+      <line chords="G | G | D | D">shining | as the | sun, | we've</line>
+      <line chords="G | G/B | C | G">no less | days to | sing God's | praise than</line>
+      <line chords="G | D | G | %">when we'd | first be- | gun. | </line>
     </section>
     <section name="Ending" pattern="end" bpm="70">
       <bars>C | G</bars>
@@ -25,7 +36,8 @@
   </sections>
   <arrangement>
     <play section="Intro"/>
-    <play section="Verse" repeat="2"/>
+    <play section="Verse 1"/>
+    <play section="Verse 2"/>
     <play section="Last verse"/>
     <play section="Ending"/>
   </arrangement>

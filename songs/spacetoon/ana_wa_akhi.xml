@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أنا وأخي - Ana wa Akhi, Spacetoon. Chords from Ultimate Guitar (tab 3355664) and Guitarabia, capo 2.
+     Bar lengths and tempo are approximate. Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أنا وأخي - Ana wa Akhi" artist="Spacetoon" bpm="84" beatsPerBar="4" capo="2" pattern="ballad">
+  <sections>
+    <section name="Intro" pattern="arpeggio">
+      <bars>A | F#m | Bm | Bm</bars>
+    </section>
+    <section name="Verse 1" pattern="arpeggio">
+      <bars>A | F#m | Bm | A Bm | G | G#m | A | Bm | G | G#m</bars>
+      <bars>G G#m | D A | Bm | Bm</bars>
+    </section>
+    <section name="Pre-chorus">
+      <bars>Bm | A D | N.C. | N.C. | Bm | A D | G | G</bars>
+    </section>
+    <section name="Chorus">
+      <bars>A | Bm | G | G#m | A | Bm | Bm</bars>
+    </section>
+    <section name="Verse 2">
+      <bars>A | A | G | G#m | A | Bm | A | Bm</bars>
+    </section>
+    <section name="Last chorus">
+      <bars>A | Bm | A | D | D</bars>
+    </section>
+  </sections>
+</song>

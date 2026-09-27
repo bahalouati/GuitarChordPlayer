@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أشتاق لبرك يا أمي (Ashtaqu Li Birriki) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/fhRyx3Q6jJY
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أشتاق لبرك يا أمي - Ashtaqu Li Birriki" artist="Spacetoon" bpm="150" beatsPerBar="4" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>Am | Em | Bm Am | C Am</bars>
+      <bars>Am | Am | Dm | Dm</bars>
+    </section>
+    <section name="Part 2">
+      <bars>G | C | C Bm | Bm Am</bars>
+      <bars>Am D | D Dm | Dm G | G</bars>
+    </section>
+    <section name="Part 3">
+      <bars>C | C Bm | Am | Am F</bars>
+      <bars>G | C Am | Am F | F G</bars>
+    </section>
+    <section name="Part 4">
+      <bars>C | Am | F | G C</bars>
+      <bars>E Am | Am F | F G | F</bars>
+    </section>
+    <section name="Part 5">
+      <bars>D | D G | G Am | C Dm</bars>
+      <bars>Dm Am | G | Am | Am</bars>
+    </section>
+    <section name="Part 6">
+      <bars>D | D Dm | Dm G | G C</bars>
+      <bars>C | Bm | Am F | F C</bars>
+    </section>
+    <section name="Part 7">
+      <bars>C G | Am | Am C | C</bars>
+      <bars>G Am | Am | C | G</bars>
+    </section>
+    <section name="Part 8">
+      <bars>Am | F | F G | Am Dm</bars>
+      <bars>Dm Am | Am G | Am C | Dm</bars>
+    </section>
+    <section name="Part 9">
+      <bars>Am G | G Am | Am | Am</bars>
+      <bars>Dm | Dm G | G | C</bars>
+    </section>
+    <section name="Part 10">
+      <bars>C G | G Am | D | Am Em</bars>
+      <bars>Em | Am | Am Dm | E</bars>
+    </section>
+    <section name="Part 11">
+      <bars>Am | Dm | G | C Am</bars>
+      <bars>Am F | F G | G C | Dm</bars>
+    </section>
+    <section name="Part 12">
+      <bars>Am | G Am | Am D | D</bars>
+      <bars>D G | Am | Am | Em</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Em</bars>
+    </section>
+  </sections>
+</song>

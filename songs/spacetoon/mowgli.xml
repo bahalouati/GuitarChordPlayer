@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ماوكلي (Mowgli) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/25k2swJI0P8
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 3: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="ماوكلي - Mowgli" artist="Spacetoon" bpm="107" beatsPerBar="4" capo="3" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>Dm | Em | Em G | G Am</bars>
+      <bars>Am | Am | Am | Am</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Am | Am | F | G</bars>
+      <bars>Dm | Am | E | E</bars>
+    </section>
+    <section name="Part 3">
+      <bars>G | Am | Am | F</bars>
+      <bars>G | Dm | Am | E</bars>
+    </section>
+    <section name="Part 4">
+      <bars>E | G Am | Am | G Am</bars>
+      <bars>F | G Am | Am | G F</bars>
+    </section>
+    <section name="Part 5">
+      <bars>F | G Am | Am | G Am</bars>
+      <bars>F | G Am | Am | G Am</bars>
+    </section>
+    <section name="Part 6">
+      <bars>F | G Am | Am | Am</bars>
+      <bars>F | G | Dm | Am</bars>
+    </section>
+    <section name="Part 7">
+      <bars>E | E | G | G</bars>
+      <bars>G | F | G | Dm</bars>
+    </section>
+    <section name="Part 8">
+      <bars>Am | E | E | G Am</bars>
+      <bars>Am | G Am | F | G Am</bars>
+    </section>
+    <section name="Part 9">
+      <bars>Am | G Am | F | G Am</bars>
+      <bars>Am | G Am | F | G Am</bars>
+    </section>
+    <section name="Part 10">
+      <bars>Am | G Am | F | G Am</bars>
+      <bars>Am A | A</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>A</bars>
+    </section>
+  </sections>
+</song>

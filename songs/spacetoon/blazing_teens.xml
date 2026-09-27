@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- بليزين تينز (Blazing Teens) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/k1upRyUhXKI
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 1: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="بليزين تينز - Blazing Teens" artist="Spacetoon" bpm="82" beatsPerBar="4" capo="1" pattern="ballad">
+  <sections>
+    <section name="Part 1">
+      <bars>F | F C | D A | Dm</bars>
+      <bars>Bb | C | Dm | Dm</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Bb | C | Dm | Bb</bars>
+      <bars>Dm | Gm | A | Dm Bb</bars>
+    </section>
+    <section name="Part 3">
+      <bars>C Dm | Bb | A | Dm Bb</bars>
+      <bars>C Dm | Bb | G | Dm</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Dm | F | C | A</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>A</bars>
+    </section>
+  </sections>
+</song>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- لن أعود للوراء (Lan Aoud Lilwaraa (Eroka)) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/d8bJYxETUbE
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 3: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="لن أعود للوراء - Lan Aoud Lilwaraa (Eroka)" artist="Spacetoon" bpm="150" beatsPerBar="4" capo="3" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>C | C | G | D</bars>
+      <bars>D Em | Em | Em | Em</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Em E | E | E | Em C</bars>
+      <bars>C | C Em | Em | Em</bars>
+    </section>
+    <section name="Part 3">
+      <bars>E | E Em | Em | Em D</bars>
+      <bars>D | D Em | Em | Em</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Em | Em E | E | E</bars>
+      <bars>B | B | Am | D</bars>
+    </section>
+    <section name="Part 5">
+      <bars>G | G | F#m | B</bars>
+      <bars>Em | Em | C | C</bars>
+    </section>
+    <section name="Part 6">
+      <bars>Bm | Em C | C Am | Am C</bars>
+      <bars>C D | B | Em | C</bars>
+    </section>
+    <section name="Part 7">
+      <bars>C D | D Em | Em | C</bars>
+      <bars>C D | D Em | Em | Em C</bars>
+    </section>
+    <section name="Part 8">
+      <bars>C D | D Em | Em | Em C</bars>
+      <bars>C D | B | E | E</bars>
+    </section>
+    <section name="Part 9">
+      <bars>E | E | E | E Em</bars>
+      <bars>Em | Em | Em | Em</bars>
+    </section>
+    <section name="Part 10">
+      <bars>G</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>G</bars>
+    </section>
+  </sections>
+</song>

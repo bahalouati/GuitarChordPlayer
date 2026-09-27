@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- عهد الأصدقاء - Romeo's Blue Skies, Spacetoon opening.
+     Chords from Ultimate Guitar (tab 3105149). Bar lengths and tempo are approximate.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="عهد الأصدقاء - Ahd Al Asdiqaa (Romeo)" artist="Spacetoon" bpm="104" beatsPerBar="4" pattern="folk">
+  <sections>
+    <section name="Verse 1">
+      <bars>G | C | G | C</bars>
+    </section>
+    <section name="Chorus 1" pattern="drive">
+      <bars>C7 C | G | F | F | C | G | F | F</bars>
+      <bars>C | G | F | F | C | G | F | F</bars>
+    </section>
+    <section name="Interlude" pattern="pop">
+      <bars>C | F | G | C | C | F | D | C | C | F | G | C | C | F | G | C</bars>
+    </section>
+    <section name="Verse 2">
+      <bars>G | C | G | C</bars>
+    </section>
+    <section name="Chorus 2" pattern="drive">
+      <bars>C7 C | G | F | F | C | G | F | F</bars>
+      <bars>C | G | F | F | C | G | F | F</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>C | C</bars>
+    </section>
+  </sections>
+</song>

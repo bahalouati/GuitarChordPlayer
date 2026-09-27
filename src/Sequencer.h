@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AudioTrack.h"
 #include "GuitarSynth.h"
 #include "Song.h"
 
@@ -30,6 +31,8 @@ public:
     void setSampleRate(double sr);
     double sampleRate() const { return m_sr; }
     void setTimeline(std::shared_ptr<const Timeline> tl);
+    // Swaps in an edited version of the song without stopping or moving the playhead.
+    void replaceTimeline(std::shared_ptr<const Timeline> tl);
 
     void play();
     void pause();
@@ -43,7 +46,18 @@ public:
     void setCountIn(bool on) { m_countInEnabled = on; }
     void setVolume(float v) { m_volume = v; }
 
-    void render(float *out, int frames);
+    // Recording played along with the guitar. offset = where bar 1 starts in the recording (seconds).
+    void setAudio(std::shared_ptr<const AudioClip> clip, double offset);
+    void setAudioOffset(double offset) { m_audioOffset = offset; m_audioRunning = false; m_resync = true; }
+    void setAudioVolume(float v) { m_audioVolume = v; }
+    void setAudioEnabled(bool on) { m_audioEnabled = on; }
+    void setGuitarEnabled(bool on) { m_guitarEnabled = on; }
+    bool hasAudio() const { return bool(m_stretch.clip()); }
+
+    // Strums a chord right away (chord finder preview), independent of the song.
+    void previewChord(const ChordShape &chord);
+
+    void render(float *left, float *right, int frames);
     qint64 framesRendered() const { return m_frame; }
     Snapshot snapshot(qint64 playedFrame) const;
 
@@ -73,7 +87,9 @@ private:
     };
 
     void fireNextStep();
-    void perform(const PatternStep &step, int chord);
+    void perform(const PatternStep &step, int chord, double stepSeconds, bool onBeat, bool downbeat);
+    void computeBarTimes();
+    double expectedAudioTime() const;
     void changeChord(int chord);
     void schedule(int string, int fret, double delaySec, float velocity, float brightness, bool muted);
     double stepSamples(const Timeline::Bar &bar) const;
@@ -99,6 +115,19 @@ private:
     bool m_metronome = false;
     bool m_countInEnabled = true;
     float m_volume = 0.8f;
+
+    // Recording
+    Stretcher m_stretch;
+    double m_audioOffset = 0.0;
+    float m_audioVolume = 0.8f;
+    bool m_audioEnabled = true;
+    bool m_guitarEnabled = true;
+    bool m_audioRunning = false;
+    bool m_resync = false;
+    bool m_audioSeeked = false;
+    std::vector<double> m_barTime; // seconds from bar 1 at normal speed
+    std::vector<float> m_audioL, m_audioR;
+    int m_audioChunkStart = 0;
 
     std::vector<Pending> m_pending;
     std::deque<PosEntry> m_history;

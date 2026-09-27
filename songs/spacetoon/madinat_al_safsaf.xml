@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- مدينة الصفصاف (Madinat Al Safsaf) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/UBBlIH3xfp8
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 2: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="مدينة الصفصاف - Madinat Al Safsaf" artist="Spacetoon" bpm="141" beatsPerBar="4" capo="2" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>G | G | G | G</bars>
+      <bars>G Dm | G | G | G</bars>
+    </section>
+    <section name="Part 2">
+      <bars>G Dm | G | G | C</bars>
+      <bars>G | G C | G | C</bars>
+    </section>
+    <section name="Part 3">
+      <bars>G | C | G | G C</bars>
+      <bars>G | G F# | G | G C</bars>
+    </section>
+    <section name="Part 4">
+      <bars>C D | D Em | G | G C</bars>
+      <bars>G | Em C | G | C</bars>
+    </section>
+    <section name="Part 5">
+      <bars>C D | Em | Em | Em</bars>
+      <bars>Em G | C D | G | C</bars>
+    </section>
+    <section name="Part 6">
+      <bars>G | C D | G | G</bars>
+      <bars>G | G F | G | G</bars>
+    </section>
+    <section name="Part 7">
+      <bars>G | G Dm | Dm G | C</bars>
+      <bars>G | Em Am | Em D | C</bars>
+    </section>
+    <section name="Part 8">
+      <bars>D | Am | G | C D</bars>
+      <bars>G | C F# | G | C</bars>
+    </section>
+    <section name="Part 9">
+      <bars>D | Em | Em G | C</bars>
+      <bars>G | C D | D G | C</bars>
+    </section>
+    <section name="Part 10">
+      <bars>Em | Em | G | G</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>G</bars>
+    </section>
+  </sections>
+</song>

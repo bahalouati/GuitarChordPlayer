@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- سنوحي (Sno7y (Tamer Hosny)) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/Xrwy4bNg9Ho
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 1: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="سنوحي - Sno7y (Tamer Hosny)" artist="Spacetoon" bpm="150" beatsPerBar="4" capo="1" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>E | E C | C D | D E</bars>
+      <bars>E | E | E | E Bm</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Bm C | C F#m | F#m B | B</bars>
+      <bars>D | D | C | D</bars>
+    </section>
+    <section name="Part 3">
+      <bars>C | C D | D | E A</bars>
+      <bars>A | Dm | Dm G | G A</bars>
+    </section>
+    <section name="Part 4">
+      <bars>A F | G | Am | G</bars>
+      <bars>G Am | Am | Am G | Am</bars>
+    </section>
+    <section name="Part 5">
+      <bars>Am Dm | Dm G | Am | Am</bars>
+      <bars>Dm | Dm G | G C | C</bars>
+    </section>
+    <section name="Part 6">
+      <bars>Am | Am Dm | Dm | G</bars>
+      <bars>E | E | G | Bm</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Bm G | Am | Am G | G Am</bars>
+      <bars>Am | Am G | G Am | Am</bars>
+    </section>
+    <section name="Part 8">
+      <bars>Dm G | Am | Am | Dm</bars>
+      <bars>Dm G | G | C | C Am</bars>
+    </section>
+    <section name="Part 9">
+      <bars>Am Dm | Dm | G | G</bars>
+      <bars>Em | Em G | Am | Am G</bars>
+    </section>
+    <section name="Part 10">
+      <bars>Am | Am F | G | Am</bars>
+      <bars>C | G | G | Bm</bars>
+    </section>
+    <section name="Part 11">
+      <bars>Bm Am | Am Dm | Dm G | Am</bars>
+      <bars>Am G | G | Am | Am</bars>
+    </section>
+    <section name="Part 12">
+      <bars>G Am | Am</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Am</bars>
+    </section>
+  </sections>
+</song>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- بابار فيل (Babar) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/BwRtzDVS84U
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 3: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="بابار فيل - Babar" artist="Spacetoon" bpm="130" beatsPerBar="4" capo="3" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>A | A Bb | Gm | Bb A</bars>
+      <bars>A | A Bb | Gm | Bb A</bars>
+    </section>
+    <section name="Part 2">
+      <bars>A | A | D | Bb A</bars>
+      <bars>A | A D | D | Bb A</bars>
+    </section>
+    <section name="Part 3">
+      <bars>A | A | A | Bbm</bars>
+      <bars>A | A | A | Bb A</bars>
+    </section>
+    <section name="Part 4">
+      <bars>A | A | A | A</bars>
+      <bars>Gm | Gm A | G | G A</bars>
+    </section>
+    <section name="Part 5">
+      <bars>A | A | A | Bbm</bars>
+      <bars>A | A | A | Bb A</bars>
+    </section>
+    <section name="Part 6">
+      <bars>A | A | A | Bb</bars>
+      <bars>A | A | D | Bb</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Bb A | A | A | A</bars>
+      <bars>Gm | Gm A | G | G A</bars>
+    </section>
+    <section name="Part 8">
+      <bars>A | A | Gm | Bbm</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Bbm</bars>
+    </section>
+  </sections>
+</song>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- جزيرة الكنز - Treasure Island, Spacetoon. Chords from Guitarabia (song 1274).
+     Bar lengths and tempo are approximate. Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="جزيرة الكنز - Treasure Island" artist="Spacetoon" bpm="108" beatsPerBar="4" pattern="folk">
+  <sections>
+    <section name="Verse">
+      <bars>D | D | F#m | Bm | D | D | F#m | Bm</bars>
+    </section>
+    <section name="Chorus" pattern="drive">
+      <bars>F#m Bm | D | A Bm | G | D Bm | G | D F#m | Bm D</bars>
+      <bars>D Bm | G | D F#m | Bm D | D</bars>
+    </section>
+  </sections>
+  <arrangement>
+    <play section="Verse"/>
+    <play section="Chorus"/>
+    <play section="Verse"/>
+    <play section="Chorus"/>
+  </arrangement>
+</song>

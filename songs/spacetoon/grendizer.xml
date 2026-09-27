@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- جرندايزر (Grendizer) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/4KIk8h9xNL8
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 4: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="جرندايزر - Grendizer" artist="Spacetoon" bpm="159" beatsPerBar="4" capo="4" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>C | Bb C | A | Dm</bars>
+      <bars>A | A | D | A</bars>
+    </section>
+    <section name="Part 2">
+      <bars>A | Bb | A | G Gm</bars>
+      <bars>Dm | Gm A | A | Bb</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Am Eb | A F# | D | D</bars>
+      <bars>A | G | A | Em</bars>
+    </section>
+    <section name="Part 4">
+      <bars>D | Em A | D | A</bars>
+      <bars>A | D | G | A</bars>
+    </section>
+    <section name="Part 5">
+      <bars>D | Dm | Dm | C</bars>
+      <bars>Dm | Eb | Eb | A</bars>
+    </section>
+    <section name="Part 6">
+      <bars>F D | D | D | D</bars>
+      <bars>D | D | D</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>D</bars>
+    </section>
+  </sections>
+</song>

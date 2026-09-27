@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- صقور الأرض (Suqour Al Ard) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/PF_1lcQkhCU
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 1: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="صقور الأرض - Suqour Al Ard" artist="Spacetoon" bpm="130" beatsPerBar="4" capo="1" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>Am | Am Dm | Dm | Dm Am</bars>
+      <bars>Bb | F D | D Dm | Am</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Bb | Am Dm | Dm | Dm</bars>
+      <bars>Dm G | Gm | Dm | Dm</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Am E | E | Dm | Dm Gm</bars>
+      <bars>C#m Dm | Dm Gm | F# Dm | Dm Gm</bars>
+    </section>
+    <section name="Part 4">
+      <bars>A Bb | Am F | F Dm | Dm</bars>
+      <bars>Am E | E | Dm | Dm</bars>
+    </section>
+    <section name="Part 5">
+      <bars>Dm E | E | Dm | Dm D</bars>
+      <bars>D E | E C# | D | D C</bars>
+    </section>
+    <section name="Part 6">
+      <bars>C Dm | Dm C | C Am | Bb</bars>
+      <bars>Bb C | C | Dm | Dm</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Dm Gm | E Gm | Dm | Dm</bars>
+      <bars>Dm E | E | Dm | Dm C</bars>
+    </section>
+    <section name="Part 8">
+      <bars>Dm | Dm | Dm Am | C Dm</bars>
+      <bars>Dm | Am | Bb | F</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>F</bars>
+    </section>
+  </sections>
+</song>

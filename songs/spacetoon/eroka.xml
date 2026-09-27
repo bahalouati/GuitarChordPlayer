@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- إيروكا (Eroka) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/X1Hu_ms7BuE
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 1: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="إيروكا - Eroka" artist="Spacetoon" bpm="122" beatsPerBar="4" capo="1" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>Am | Am | Am | C</bars>
+      <bars>C | Dm | Am | Am Dm</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Dm | G | G | F Em</bars>
+      <bars>Am | F Em | Am | F C</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Am G | G | G | C</bars>
+      <bars>Am | Am | Am Em | F</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Em | Em | A | D Am</bars>
+      <bars>F F#m | G | Am | D Am</bars>
+    </section>
+    <section name="Part 5">
+      <bars>F F#m | G | C Am | Am</bars>
+      <bars>Eb | Eb | D | D</bars>
+    </section>
+    <section name="Part 6">
+      <bars>D</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>D</bars>
+    </section>
+  </sections>
+</song>

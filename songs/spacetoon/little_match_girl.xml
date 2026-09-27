@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- بائعة الكبريت (The Little Match Girl) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/71aau2qMeXo
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="بائعة الكبريت - The Little Match Girl" artist="Spacetoon" bpm="103" beatsPerBar="4" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>Bbm | Bbm F | Am | E</bars>
+      <bars>A | A C | C | C Am</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Am | Am B | F | F</bars>
+      <bars>F | F | F Am | F Gm</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Gm E | E | C E | Bm</bars>
+      <bars>Em | A | Bm Dm | A</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Bm Dm | Em | Em G | G A</bars>
+      <bars>A Dm | G Am | Am E | D Am</bars>
+    </section>
+    <section name="Part 5">
+      <bars>E | E F | F E | E</bars>
+      <bars>F E | E | F | E</bars>
+    </section>
+    <section name="Part 6">
+      <bars>Fm | Fm E | E | E</bars>
+      <bars>E C | C Am | D C | C F</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Am | Am | Am | Am</bars>
+      <bars>Am E | E | E | E</bars>
+    </section>
+    <section name="Part 8">
+      <bars>E D | A | A | Dm Am</bars>
+      <bars>Am | A | A | A</bars>
+    </section>
+    <section name="Part 9">
+      <bars>A | Bm G#m | G#m A | A</bars>
+      <bars>A C#m | C#m E | E A | A G#m</bars>
+    </section>
+    <section name="Part 10">
+      <bars>A | A | A | A Am</bars>
+      <bars>Dm | E | Dm | A</bars>
+    </section>
+    <section name="Part 11">
+      <bars>A Dm | Dm | Am Dm | Am Dm</bars>
+      <bars>A | A | A D | F#</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>F#</bars>
+    </section>
+  </sections>
+</song>

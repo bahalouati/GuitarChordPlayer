@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- الصياد الجريء (Al Sayyad Al Jariy) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/Jfk7MDwhhpY
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 3: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="الصياد الجريء - Al Sayyad Al Jariy" artist="Spacetoon" bpm="88" beatsPerBar="4" capo="3" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>G | G | G C | C Em</bars>
+      <bars>Em | Bm C | Bm D | Em</bars>
+    </section>
+    <section name="Part 2">
+      <bars>C G | Am | B | B</bars>
+      <bars>D Em | D | G | G</bars>
+    </section>
+    <section name="Part 3">
+      <bars>G | G Em | Em C | G Am</bars>
+      <bars>Am B | B D</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>D</bars>
+    </section>
+  </sections>
+</song>

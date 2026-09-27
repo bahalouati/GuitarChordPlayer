@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- الطاقة الزرقاء (Al Taqa Al Zarqaa) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/S3ZuPbgiJac
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 1: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="الطاقة الزرقاء - Al Taqa Al Zarqaa" artist="Spacetoon" bpm="125" beatsPerBar="4" capo="1" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>G A | A G | G A | A G</bars>
+      <bars>G A | A G | G A | A</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Bm | G A | F | C#</bars>
+      <bars>C# Bbm | F# | G# | C#</bars>
+    </section>
+    <section name="Part 3">
+      <bars>C# Bbm | Fm | F# G# | F#</bars>
+      <bars>C# | F | Bbm G# | F#</bars>
+    </section>
+    <section name="Part 4">
+      <bars>F# G# | F# | G# | G A</bars>
+      <bars>A G | G A | A G | G A</bars>
+    </section>
+    <section name="Part 5">
+      <bars>A G | G A | F | F</bars>
+      <bars>F Dm | Dm | Bb | F</bars>
+    </section>
+    <section name="Part 6">
+      <bars>F Dm | Am | Bb | F</bars>
+      <bars>F | F | Bb | F Bb</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Bb | Bb</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Bb</bars>
+    </section>
+  </sections>
+</song>

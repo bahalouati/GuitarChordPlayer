@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Remi (ريمي) - Spacetoon opening. Chords from Ultimate Guitar (tab 3585179).
+     The bar lengths and tempo are approximate: adjust them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="ريمي - Remi" artist="Spacetoon" bpm="96" beatsPerBar="4" pattern="folk">
+  <chords>
+    <chord name="A7sus4" frets="x02030" fingers="002030"/>
+    <chord name="C/G" frets="332010" fingers="342010"/>
+  </chords>
+  <sections>
+    <section name="Remi Remi (intro)" pattern="arpeggio">
+      <bars>Em | B7 | Am | Em | B7 | Am</bars>
+    </section>
+    <section name="Verse">
+      <bars repeat="2">Em | B7 | Am | Am | E7 | B7 | C | C | Em | B7 | Am | Am | Em | A7sus4 | C/G | C/G</bars>
+    </section>
+    <section name="Remi Remi" pattern="drive">
+      <bars repeat="2">Em | B7 | Am | Em | B7 | Am</bars>
+    </section>
+    <section name="Bridge">
+      <bars repeat="2">B7 | B7 | Em | Em</bars>
+    </section>
+    <section name="Ending" pattern="drive">
+      <bars>Em | B7 | Am | Em | B7 | Am</bars>
+      <bars>Am</bars>
+    </section>
+  </sections>
+</song>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أنا وأخواتي (Ana wa Akhawati) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/XK-HpBsbu-c
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 5: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أنا وأخواتي - Ana wa Akhawati" artist="Spacetoon" bpm="94" beatsPerBar="4" capo="5" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>G | G C | D | G</bars>
+      <bars>Em | C | D | G</bars>
+    </section>
+    <section name="Part 2">
+      <bars>D | G C | G | G</bars>
+      <bars>D | D | G | G</bars>
+    </section>
+    <section name="Part 3">
+      <bars>D | G C | G | G</bars>
+      <bars>D | D | G | C</bars>
+    </section>
+    <section name="Part 4">
+      <bars>D | C | D | C</bars>
+      <bars>D | G | G | G</bars>
+    </section>
+    <section name="Part 5">
+      <bars>D | D | G | C D</bars>
+      <bars>G | C D | G | C D</bars>
+    </section>
+    <section name="Part 6">
+      <bars>G | D | G | C D</bars>
+      <bars>G | C D | G | C D</bars>
+    </section>
+    <section name="Part 7">
+      <bars>G | G | G | C D</bars>
+      <bars>G | C D | G | C D</bars>
+    </section>
+    <section name="Part 8">
+      <bars>G | G | C | D</bars>
+      <bars>C | D | C | D</bars>
+    </section>
+    <section name="Part 9">
+      <bars>G | G | G | D</bars>
+      <bars>D | G | C | G</bars>
+    </section>
+    <section name="Part 10">
+      <bars>C | G | C | G</bars>
+      <bars>G | G | G | G</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>G</bars>
+    </section>
+  </sections>
+</song>

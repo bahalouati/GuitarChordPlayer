@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- سابق ولاحق - Sabiq wa Lahiq, Spacetoon. Chords from Ultimate Guitar (tab 3497027) and Guitarabia.
+     Bar lengths and tempo are approximate. Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="سابق ولاحق - Sabiq wa Lahiq" artist="Spacetoon" bpm="136" beatsPerBar="4" pattern="drive">
+  <sections>
+    <section name="Intro" pattern="rock">
+      <bars>C | Am | F | Em | C | C</bars>
+    </section>
+    <section name="Verse">
+      <bars>G Am | Em C | C G | D | Em | C | G | Am</bars>
+    </section>
+    <section name="Bridge" pattern="pop">
+      <bars>Cm G | Bb Ab | Cm | Cm | G D | Fm | Fm | Fm</bars>
+    </section>
+    <section name="Chorus" pattern="rock">
+      <bars>F G | Am Em | C | C | G | Dm Em</bars>
+      <bars>F G | Am Em | C | C | C G | Dm Em</bars>
+    </section>
+    <section name="Outro" pattern="rock">
+      <bars>C | Am | F | Em | C | C</bars>
+    </section>
+  </sections>
+</song>

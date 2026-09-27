@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أسرار الغابة (Asrar Al Ghaba) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/cH9SyG-UJgg
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 3: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أسرار الغابة - Asrar Al Ghaba" artist="Spacetoon" bpm="97" beatsPerBar="4" capo="3" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>C#m | Am | F E | E A</bars>
+      <bars>B | B | C F | C F</bars>
+    </section>
+    <section name="Part 2">
+      <bars>F Dm | E F | Dm | Dm B</bars>
+      <bars>F | F Dm | Dm G | G Am</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Am | Em B | B | B</bars>
+      <bars>B E | Dm G | C E | Dm G</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Am | Dm G | C Dm | Dm Am</bars>
+      <bars>Am | Dm G | C F | F Dm</bars>
+    </section>
+    <section name="Part 5">
+      <bars>Am | Am | Am Dm | E Dm</bars>
+      <bars>Dm | Dm | F | F Dm</bars>
+    </section>
+    <section name="Part 6">
+      <bars>Dm G | Am | A | F</bars>
+      <bars>F</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>F</bars>
+    </section>
+  </sections>
+</song>

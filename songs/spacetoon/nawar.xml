@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- نوار - Nawar, Spacetoon. Chords from Guitarabia (song 1344, by Ali Rivol). No capo.
+     Bar lengths and tempo are approximate. Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="نوار - Nawar" artist="Spacetoon" bpm="100" beatsPerBar="4" pattern="folk">
+  <sections>
+    <section name="Verse">
+      <bars>D | G D | D A | A | D G | A | A</bars>
+    </section>
+    <section name="Music" pattern="pop">
+      <bars>D | A | D | A | D</bars>
+    </section>
+    <section name="Part 2">
+      <bars>G D | A | A | G | D A | G | A | D</bars>
+    </section>
+    <section name="Part 3" pattern="drive">
+      <bars>D | A | D | G | A | D | A | D | G | G | D | D</bars>
+    </section>
+  </sections>
+</song>

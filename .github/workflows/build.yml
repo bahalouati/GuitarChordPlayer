@@ -8,6 +8,8 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    permissions:
+      contents: write   # to publish releases
     steps:
       - uses: actions/checkout@v4
       - uses: jurplel/install-qt-action@v4
@@ -17,7 +19,8 @@ jobs:
           modules: 'qtmultimedia'
           cache: true
       - name: Configure
-        run: cmake -S . -B build
+        # The build number is compiled in so the app's updater can tell which build it is.
+        run: cmake -S . -B build -DAPP_BUILD=${{ github.run_number }}
       - name: Build
         run: cmake --build build --config Release
       - name: Package
@@ -27,14 +30,47 @@ jobs:
       - name: Smoke test (render every song to WAV)
         shell: pwsh
         run: |
-          Get-ChildItem songs/*.xml | ForEach-Object {
-            $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--render", $_.FullName, "$env:RUNNER_TEMP/$($_.BaseName).wav" -Wait -PassThru -NoNewWindow
+          Get-ChildItem songs -Recurse -Filter *.xml | ForEach-Object {
+            $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--render", "`"$($_.FullName)`"", "$env:RUNNER_TEMP/$($_.BaseName).wav" -Wait -PassThru -NoNewWindow
             if ($p.ExitCode -ne 0) { throw "Rendering $($_.Name) failed" }
           }
+          # Chord detection round trip: render a song, then detect its chords from the WAV.
+          $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--detect", "$env:RUNNER_TEMP/pop_practice.wav", "$env:RUNNER_TEMP/detected.xml" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Chord detection failed" }
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+          }
+          & $iscc /DAppVersion=1.0.${{ github.run_number }} installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
       - uses: actions/upload-artifact@v4
         with:
           name: GuitarChordPlayer-windows
           path: dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GuitarChordPlayer-Setup
+          path: GuitarChordPlayer-Setup.exe
+      - name: Zip for release
+        if: github.event_name == 'push' && github.ref_name == 'main'
+        shell: pwsh
+        run: Compress-Archive -Path dist/* -DestinationPath GuitarChordPlayer-windows.zip
+      # Every push to main becomes a release; the app updates itself from the latest one.
+      - name: Publish release
+        if: github.event_name == 'push' && github.ref_name == 'main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          body: ${{ github.event.head_commit.message }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            GuitarChordPlayer-windows.zip
+            GuitarChordPlayer-Setup.exe
+          make_latest: true
 
   linux:
     runs-on: ubuntu-24.04
@@ -47,4 +83,8 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j4
       - name: Smoke test (render every song to WAV)
-        run: for f in songs/*.xml; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav"; done
+        run: |
+          find songs -name '*.xml' -print0 | while IFS= read -r -d '' f; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav" || exit 1; done
+          ./build/GuitarChordPlayer --detect /tmp/pop_practice.wav /tmp/detected.xml
+      - name: Translations (lists interface text without an Arabic translation)
+        run: python3 scripts/check_translations.py

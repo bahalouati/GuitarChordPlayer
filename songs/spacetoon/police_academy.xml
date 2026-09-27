@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أكاديمية الشرطة (Police Academy) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/0IeH_seQXC0
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أكاديمية الشرطة - Police Academy" artist="Spacetoon" bpm="114" beatsPerBar="4" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>E | E | E | E D</bars>
+      <bars>Am | Am | Dm | Dm</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Am | Am | Dm | Dm G#</bars>
+      <bars>E | E A | Em Am | G Am</bars>
+    </section>
+    <section name="Part 3">
+      <bars>G F | Am | G F | G D</bars>
+      <bars>Am | Am | Am Dm | Dm</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Am | Am | Dm | Dm</bars>
+      <bars>E | Em Am | G Am | G Am</bars>
+    </section>
+    <section name="Part 5">
+      <bars>G | Am | G Dm | C E</bars>
+      <bars>Am</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Am</bars>
+    </section>
+  </sections>
+</song>

@@ -28,7 +28,7 @@ private:
     Sequencer *m_seq;
     QMutex *m_mutex;
     QAudioFormat m_fmt;
-    std::vector<float> m_scratch;
+    std::vector<float> m_left, m_right;
 };
 
 class AudioEngine : public QObject
@@ -41,6 +41,7 @@ public:
     bool start(QString *error);
 
     void setTimeline(std::shared_ptr<const Timeline> tl);
+    void replaceTimeline(std::shared_ptr<const Timeline> tl);
     void play();
     void pause();
     void stop();
@@ -52,6 +53,15 @@ public:
     void setMetronome(bool on);
     void setCountIn(bool on);
     void setVolume(float v);
+    void previewChord(const ChordShape &chord);
+
+    // Recording played along (see Sequencer::setAudio).
+    int sampleRate() const;
+    void setAudio(std::shared_ptr<const AudioClip> clip, double offset);
+    void setAudioOffset(double offset);
+    void setAudioVolume(float v);
+    void setAudioEnabled(bool on);
+    void setGuitarEnabled(bool on);
 
     // Playback position as currently heard through the speakers.
     Sequencer::Snapshot snapshot();
