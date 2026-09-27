@@ -43,6 +43,9 @@ public:
     void setCountIn(bool on) { m_countInEnabled = on; }
     void setVolume(float v) { m_volume = v; }
 
+    // Strums a chord right away (chord finder preview), independent of the song.
+    void previewChord(const ChordShape &chord);
+
     void render(float *out, int frames);
     qint64 framesRendered() const { return m_frame; }
     Snapshot snapshot(qint64 playedFrame) const;

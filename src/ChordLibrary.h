@@ -29,4 +29,10 @@ std::optional<std::array<int, 6>> parseFingers(const QString &text);
 // Built-in shapes for common open and barre chords, keyed by chord name.
 const QHash<QString, ChordShape> &builtIn();
 
+// Finds a shape for any chord name: the built-in library first (also trying spelling
+// variants such as "Amin" -> "Am" and "A#" -> "Bb"), then a generated barre chord for
+// roots A-G with #/b and the qualities m, 7, m7, maj7, sus2, sus4, 5, 6, m6, 9, dim, aug.
+// Slash chords ("G/B") fall back to the chord without the bass note.
+std::optional<ChordShape> lookup(const QString &name);
+
 } // namespace ChordLibrary

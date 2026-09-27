@@ -203,7 +203,12 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
             p.drawEllipse(ctr, dotR + 2, dotR + 2);
         }
         const int finger = c.fingers[size_t(i)];
-        if (finger > 0 && (!inBarre[size_t(i)] || i == 0 || c.fingers[size_t(i - 1)] != finger)) {
+        // Label a barre only once, on its lowest string.
+        bool firstOfBarre = true;
+        for (int j = 0; j < i; ++j)
+            if (inBarre[size_t(j)] && c.fingers[size_t(j)] == finger && c.frets[size_t(j)] == fr)
+                firstOfBarre = false;
+        if (finger > 0 && (!inBarre[size_t(i)] || firstOfBarre)) {
             p.setPen(Qt::white);
             p.drawText(QRectF(ctr.x() - dotR, ctr.y() - dotR, 2 * dotR, 2 * dotR), Qt::AlignCenter,
                        finger == 5 ? QStringLiteral("T") : QString::number(finger));

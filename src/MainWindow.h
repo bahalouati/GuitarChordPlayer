@@ -8,6 +8,8 @@
 
 class ChordDiagramWidget;
 class PatternWidget;
+class SongEditor;
+class QDockWidget;
 class QCheckBox;
 class QFileSystemWatcher;
 class QLabel;
@@ -25,12 +27,20 @@ public:
 
     bool loadSongFile(const QString &path, bool keepPosition = false);
 
+protected:
+    void dragEnterEvent(QDragEnterEvent *e) override;
+    void dropEvent(QDropEvent *e) override;
+    void closeEvent(QCloseEvent *e) override;
+
 private slots:
     void togglePlay();
     void stop();
     void previousSection();
     void nextSection();
     void openSong();
+    void newSong();
+    void toggleEditor();
+    void showChordFinder();
     void reloadSong();
     void exportWav();
     void refreshSongList();
@@ -40,9 +50,15 @@ private slots:
     void showFormatHelp();
 
 private:
+    bool loadSongFileImpl(const QString &path, bool keepPosition);
     void buildUi();
     void buildMenus();
-    QString songsDir() const;
+    QString examplesDir() const;
+    QString userSongsDir() const;
+    QString uniqueSongPath(const QString &title) const;
+    void importSong(const QString &path);
+    void watchPaths();
+    void showError(const QString &message);
     int currentPlay() const;
     void jumpToPlay(int play);
     void setPlayButton(bool playing);
@@ -52,6 +68,10 @@ private:
     std::shared_ptr<Timeline> m_timeline;
 
     QListWidget *m_songList = nullptr;
+    QLabel *m_banner = nullptr;
+    SongEditor *m_editor = nullptr;
+    QDockWidget *m_editorDock = nullptr;
+    QTimer *m_dirRefresh = nullptr;
     QListWidget *m_sectionList = nullptr;
     QLabel *m_title = nullptr;
     QLabel *m_info = nullptr;
@@ -73,4 +93,5 @@ private:
     int m_viewBar = 0;
     int m_viewStep = 0;
     bool m_audioOk = false;
+    bool m_loading = false; // inside loadSongFile
 };

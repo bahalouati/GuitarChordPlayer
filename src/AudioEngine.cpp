@@ -179,6 +179,12 @@ void AudioEngine::setVolume(float v)
     m_seq.setVolume(v);
 }
 
+void AudioEngine::previewChord(const ChordShape &chord)
+{
+    QMutexLocker l(&m_mutex);
+    m_seq.previewChord(chord);
+}
+
 Sequencer::Snapshot AudioEngine::snapshot()
 {
     QMutexLocker l(&m_mutex);

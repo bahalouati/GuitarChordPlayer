@@ -1,15 +1,24 @@
 #include "MainWindow.h"
 
 #include "ChordDiagramWidget.h"
+#include "ChordFinderDialog.h"
+#include "NewSongDialog.h"
 #include "PatternWidget.h"
+#include "SongEditor.h"
 #include "WavWriter.h"
 
 #include <QAction>
 #include <QApplication>
 #include <QCheckBox>
+#include <QCloseEvent>
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
+#include <QDockWidget>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QStandardPaths>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFileSystemWatcher>
@@ -19,6 +28,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QSlider>
 #include <QSplitter>
@@ -41,14 +51,27 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     buildUi();
     buildMenus();
 
+    QDir().mkpath(userSongsDir());
+    m_editor->setUserSongsDir(userSongsDir());
+    setAcceptDrops(true);
+
     m_watcher = new QFileSystemWatcher(this);
     connect(m_watcher, &QFileSystemWatcher::fileChanged, this, [this](const QString &path) {
-        // Editors often save by replace; re-add the path and reload after a short delay.
+        // Editors often save by replacing the file; reload after a short delay and watch it again.
         QTimer::singleShot(200, this, [this, path] {
+            m_editor->fileChangedOnDisk(path);
             if (m_song && m_song->filePath == path)
                 loadSongFile(path, true);
+            watchPaths();
         });
     });
+    // New, renamed or deleted files in the song folders show up in the list by themselves.
+    m_dirRefresh = new QTimer(this);
+    m_dirRefresh->setSingleShot(true);
+    m_dirRefresh->setInterval(300);
+    connect(m_dirRefresh, &QTimer::timeout, this, &MainWindow::refreshSongList);
+    connect(m_watcher, &QFileSystemWatcher::directoryChanged, m_dirRefresh, qOverload<>(&QTimer::start));
+    watchPaths();
 
     QSettings s;
     m_tempo->setValue(s.value(QStringLiteral("tempo"), 100).toInt());
@@ -56,13 +79,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_metronome->setChecked(s.value(QStringLiteral("metronome"), false).toBool());
     m_countIn->setChecked(s.value(QStringLiteral("countIn"), true).toBool());
     restoreGeometry(s.value(QStringLiteral("geometry")).toByteArray());
+    restoreState(s.value(QStringLiteral("windowState")).toByteArray());
 
     refreshSongList();
     const QString last = s.value(QStringLiteral("lastSong")).toString();
-    if (!last.isEmpty() && QFileInfo::exists(last))
+    if (!last.isEmpty() && QFileInfo::exists(last)) {
         loadSongFile(last);
-    else if (m_songList->count() > 0)
-        loadSongFile(m_songList->item(0)->data(Qt::UserRole).toString());
+    } else {
+        for (int i = 0; i < m_songList->count(); ++i) {
+            const QString path = m_songList->item(i)->data(Qt::UserRole).toString();
+            if (path.endsWith(QLatin1String(".xml"))) {
+                loadSongFile(path);
+                break;
+            }
+        }
+    }
 
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::updateView);
@@ -82,6 +113,7 @@ MainWindow::~MainWindow()
     s.setValue(QStringLiteral("metronome"), m_metronome->isChecked());
     s.setValue(QStringLiteral("countIn"), m_countIn->isChecked());
     s.setValue(QStringLiteral("geometry"), saveGeometry());
+    s.setValue(QStringLiteral("windowState"), saveState());
     if (m_song)
         s.setValue(QStringLiteral("lastSong"), m_song->filePath);
 }
@@ -93,6 +125,16 @@ void MainWindow::buildUi()
     // Left: song library and arrangement
     auto *left = new QWidget;
     auto *ll = new QVBoxLayout(left);
+    auto *newBtn = new QPushButton(tr("+ New song"));
+    newBtn->setFocusPolicy(Qt::NoFocus);
+    connect(newBtn, &QPushButton::clicked, this, &MainWindow::newSong);
+    auto *editBtn = new QPushButton(tr("Edit song"));
+    editBtn->setFocusPolicy(Qt::NoFocus);
+    connect(editBtn, &QPushButton::clicked, this, &MainWindow::toggleEditor);
+    auto *btnRow = new QHBoxLayout;
+    btnRow->addWidget(newBtn);
+    btnRow->addWidget(editBtn);
+    ll->addLayout(btnRow);
     ll->addWidget(new QLabel(tr("<b>Songs</b>")));
     m_songList = new QListWidget;
     ll->addWidget(m_songList, 2);
@@ -101,12 +143,11 @@ void MainWindow::buildUi()
     ll->addWidget(m_sectionList, 3);
     splitter->addWidget(left);
 
-    connect(m_songList, &QListWidget::itemActivated, this, [this](QListWidgetItem *it) {
-        loadSongFile(it->data(Qt::UserRole).toString());
-    });
     connect(m_songList, &QListWidget::itemClicked, this, [this](QListWidgetItem *it) {
         const QString path = it->data(Qt::UserRole).toString();
-        if (!m_song || m_song->filePath != path)
+        if (path == QLatin1String("new"))
+            newSong();
+        else if (!path.isEmpty() && (!m_song || m_song->filePath != path))
             loadSongFile(path);
     });
     connect(m_sectionList, &QListWidget::itemClicked, this, [this](QListWidgetItem *it) {
@@ -127,6 +168,12 @@ void MainWindow::buildUi()
     sf.setPointSizeF(sf.pointSizeF() * 1.5);
     m_section->setFont(sf);
     m_section->setStyleSheet(QStringLiteral("color: rgb(255,140,40);"));
+    m_banner = new QLabel;
+    m_banner->setWordWrap(true);
+    m_banner->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_banner->setStyleSheet(QStringLiteral("background: #d03030; color: white; padding: 8px; border-radius: 4px;"));
+    m_banner->hide();
+    rl->addWidget(m_banner);
     rl->addWidget(m_title);
     rl->addWidget(m_info);
     rl->addWidget(m_section);
@@ -213,6 +260,19 @@ void MainWindow::buildUi()
     splitter->setSizes({220, 900});
     setCentralWidget(splitter);
 
+    m_editor = new SongEditor;
+    m_editorDock = new QDockWidget(tr("Song editor"), this);
+    m_editorDock->setObjectName(QStringLiteral("editorDock"));
+    m_editorDock->setWidget(m_editor);
+    addDockWidget(Qt::RightDockWidgetArea, m_editorDock);
+    m_editorDock->hide();
+    connect(m_editor, &SongEditor::saved, this, [this](const QString &path) {
+        // While switching songs the editor may save the previous one; don't load it back.
+        if (!m_loading)
+            loadSongFile(path, m_song && m_song->filePath == path);
+        m_dirRefresh->start();
+    });
+
     m_status = new QLabel;
     statusBar()->addWidget(m_status, 1);
     resize(1180, 760);
@@ -221,11 +281,13 @@ void MainWindow::buildUi()
 void MainWindow::buildMenus()
 {
     QMenu *file = menuBar()->addMenu(tr("&File"));
+    file->addAction(tr("&New song..."), QKeySequence::New, this, &MainWindow::newSong);
+    file->addAction(tr("&Edit song"), QKeySequence(Qt::CTRL | Qt::Key_E), this, &MainWindow::toggleEditor);
     file->addAction(tr("&Open song..."), QKeySequence::Open, this, &MainWindow::openSong);
     file->addAction(tr("&Reload song"), QKeySequence(Qt::Key_F5), this, &MainWindow::reloadSong);
     file->addAction(tr("Refresh song &list"), this, &MainWindow::refreshSongList);
-    file->addAction(tr("Open songs &folder"), this, [this] {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(songsDir()));
+    file->addAction(tr("Open &My Songs folder"), this, [this] {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(userSongsDir()));
     });
     file->addSeparator();
     file->addAction(tr("&Export as WAV..."), this, &MainWindow::exportWav);
@@ -245,6 +307,9 @@ void MainWindow::buildMenus()
     play->addAction(tr("Toggle loop section"), QKeySequence(Qt::Key_L), m_loop, &QCheckBox::toggle);
     play->addAction(tr("Toggle metronome"), QKeySequence(Qt::Key_M), m_metronome, &QCheckBox::toggle);
 
+    QMenu *tools = menuBar()->addMenu(tr("&Tools"));
+    tools->addAction(tr("&Chord finder..."), QKeySequence(Qt::CTRL | Qt::Key_K), this, &MainWindow::showChordFinder);
+
     QMenu *help = menuBar()->addMenu(tr("&Help"));
     help->addAction(tr("Song XML format..."), this, &MainWindow::showFormatHelp);
     help->addAction(tr("About"), this, [this] {
@@ -255,7 +320,13 @@ void MainWindow::buildMenus()
     });
 }
 
-QString MainWindow::songsDir() const
+QString MainWindow::userSongsDir() const
+{
+    return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+            + QStringLiteral("/Guitar Chord Player/My Songs");
+}
+
+QString MainWindow::examplesDir() const
 {
     const QString app = QCoreApplication::applicationDirPath();
     const QStringList candidates = {app + QStringLiteral("/songs"), app + QStringLiteral("/../songs"),
@@ -268,24 +339,184 @@ QString MainWindow::songsDir() const
 
 void MainWindow::refreshSongList()
 {
+    const QString current = m_song ? m_song->filePath : QString();
     m_songList->clear();
-    QDir dir(songsDir());
-    const QStringList files = dir.entryList({QStringLiteral("*.xml")}, QDir::Files, QDir::Name);
-    for (const QString &f : files) {
-        const QString path = dir.absoluteFilePath(f);
-        QString err;
-        auto song = loadSong(path, &err);
-        auto *it = new QListWidgetItem(song ? song->title : f + tr(" (error)"));
-        it->setData(Qt::UserRole, path);
-        if (song && !song->artist.isEmpty())
-            it->setToolTip(song->artist);
-        else if (!song)
-            it->setToolTip(err);
+
+    auto addHeader = [this](const QString &text) {
+        auto *it = new QListWidgetItem(text);
+        QFont f = it->font();
+        f.setBold(true);
+        it->setFont(f);
+        it->setFlags(Qt::ItemIsEnabled); // a heading: not selectable
         m_songList->addItem(it);
+    };
+    auto addFolder = [this, &current](const QString &dirPath) {
+        QDir dir(dirPath);
+        const QStringList files = dir.entryList({QStringLiteral("*.xml")}, QDir::Files, QDir::Name);
+        for (const QString &f : files) {
+            const QString path = dir.absoluteFilePath(f);
+            QString err;
+            auto song = loadSong(path, &err);
+            std::shared_ptr<Timeline> tl = song ? buildTimeline(song, &err) : nullptr;
+            auto *it = new QListWidgetItem(QStringLiteral("   ") + (song ? song->title : QFileInfo(f).completeBaseName()));
+            it->setData(Qt::UserRole, path);
+            if (!tl) {
+                it->setForeground(QColor(208, 48, 48));
+                it->setText(it->text() + tr("  (needs fixing)"));
+                it->setToolTip(err);
+            } else if (!song->artist.isEmpty()) {
+                it->setToolTip(song->artist);
+            }
+            m_songList->addItem(it);
+            if (path == current)
+                m_songList->setCurrentItem(it);
+        }
+    };
+
+    addHeader(tr("My Songs"));
+    auto *add = new QListWidgetItem(tr("   + Create a new song..."));
+    add->setData(Qt::UserRole, QStringLiteral("new"));
+    add->setForeground(QColor(40, 120, 220));
+    m_songList->addItem(add);
+    addFolder(userSongsDir());
+    const QString examples = examplesDir();
+    if (QDir(examples).absolutePath() != QDir(userSongsDir()).absolutePath()) {
+        addHeader(tr("Examples"));
+        addFolder(examples);
     }
 }
 
+void MainWindow::watchPaths()
+{
+    QStringList wanted = {userSongsDir(), examplesDir()};
+    if (m_song && !m_song->filePath.isEmpty())
+        wanted << m_song->filePath;
+    if (!m_editor->filePath().isEmpty())
+        wanted << m_editor->filePath();
+    for (const QString &p : wanted)
+        if (QFileInfo::exists(p) && !m_watcher->files().contains(p) && !m_watcher->directories().contains(p))
+            m_watcher->addPath(p);
+}
+
+void MainWindow::showError(const QString &message)
+{
+    m_banner->setText(message);
+    m_banner->setVisible(!message.isEmpty());
+}
+
+QString MainWindow::uniqueSongPath(const QString &title) const
+{
+    QString base = title;
+    base.replace(QRegularExpression(QStringLiteral("[\\\\/:*?\"<>|]")), QStringLiteral("_"));
+    base = base.trimmed();
+    if (base.isEmpty())
+        base = QStringLiteral("My Song");
+    QString path = userSongsDir() + QLatin1Char('/') + base + QStringLiteral(".xml");
+    for (int n = 2; QFileInfo::exists(path); ++n)
+        path = userSongsDir() + QLatin1Char('/') + base + QStringLiteral(" (%1).xml").arg(n);
+    return path;
+}
+
+void MainWindow::newSong()
+{
+    NewSongDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+    const QString path = uniqueSongPath(dlg.title());
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly) || f.write(dlg.xml().toUtf8()) < 0) {
+        QMessageBox::warning(this, tr("New song"), tr("Could not save %1").arg(path));
+        return;
+    }
+    f.close();
+    refreshSongList();
+    if (loadSongFile(path)) {
+        m_editorDock->show();
+        m_engine->play();
+        setPlayButton(true);
+        m_status->setText(tr("Saved to %1 - use Edit song to change strums, chords or tempo").arg(path));
+    }
+}
+
+void MainWindow::toggleEditor()
+{
+    if (m_editorDock->isVisible()) {
+        m_editorDock->hide();
+        return;
+    }
+    if (m_song && m_editor->filePath().isEmpty())
+        m_editor->openFile(m_song->filePath);
+    m_editorDock->show();
+    m_editorDock->raise();
+}
+
+void MainWindow::showChordFinder()
+{
+    auto *dlg = new ChordFinderDialog(m_engine, this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->show();
+}
+
+void MainWindow::importSong(const QString &path)
+{
+    QString target = path;
+    if (QFileInfo(path).absolutePath() != QDir(userSongsDir()).absolutePath()) {
+        target = userSongsDir() + QLatin1Char('/') + QFileInfo(path).fileName();
+        for (int n = 2; QFileInfo::exists(target); ++n)
+            target = userSongsDir() + QLatin1Char('/') + QFileInfo(path).completeBaseName()
+                     + QStringLiteral(" (%1).xml").arg(n);
+        if (!QFile::copy(path, target)) {
+            QMessageBox::warning(this, tr("Add song"), tr("Could not copy %1 to %2").arg(path, target));
+            return;
+        }
+    }
+    refreshSongList();
+    loadSongFile(target);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *e)
+{
+    for (const QUrl &u : e->mimeData()->urls()) {
+        if (u.isLocalFile() && u.toLocalFile().endsWith(QLatin1String(".xml"), Qt::CaseInsensitive)) {
+            e->acceptProposedAction();
+            return;
+        }
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *e)
+{
+    for (const QUrl &u : e->mimeData()->urls())
+        if (u.isLocalFile() && u.toLocalFile().endsWith(QLatin1String(".xml"), Qt::CaseInsensitive))
+            importSong(u.toLocalFile());
+    m_status->setText(tr("Added to My Songs (%1)").arg(userSongsDir()));
+}
+
+void MainWindow::closeEvent(QCloseEvent *e)
+{
+    if (m_editor->isModified()) {
+        const auto r = QMessageBox::question(this, tr("Unsaved changes"),
+                                             tr("Save your changes to %1?").arg(QFileInfo(m_editor->filePath()).fileName()),
+                                             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        if (r == QMessageBox::Cancel || (r == QMessageBox::Save && !m_editor->save())) {
+            e->ignore();
+            return;
+        }
+    }
+    e->accept();
+}
+
 bool MainWindow::loadSongFile(const QString &path, bool keepPosition)
+{
+    if (m_loading)
+        return false;
+    m_loading = true;
+    const bool ok = loadSongFileImpl(path, keepPosition);
+    m_loading = false;
+    return ok;
+}
+
+bool MainWindow::loadSongFileImpl(const QString &path, bool keepPosition)
 {
     QString err;
     auto song = loadSong(path, &err);
@@ -293,16 +524,18 @@ bool MainWindow::loadSongFile(const QString &path, bool keepPosition)
     if (song)
         tl = buildTimeline(song, &err);
     if (!tl) {
-        if (keepPosition) {
-            // Keep playing the old version while the file is being edited.
-            m_status->setText(tr("Reload failed: %1").arg(err));
-        } else {
-            QMessageBox::warning(this, tr("Cannot load song"), QFileInfo(path).fileName() + QStringLiteral("\n\n") + err);
+        // Show what is wrong and open the file in the editor so it can be fixed right away.
+        // If a song was already playing, it keeps playing the last good version.
+        showError(tr("<b>%1 has a problem:</b> %2<br>Fix it in the song editor and press Ctrl+S.")
+                  .arg(QFileInfo(path).fileName().toHtmlEscaped(), err.toHtmlEscaped()));
+        if (QFileInfo::exists(path)) {
+            m_editor->openFile(path);
+            m_editorDock->show();
         }
-        if (!m_watcher->files().contains(path) && QFileInfo::exists(path))
-            m_watcher->addPath(path);
+        watchPaths();
         return false;
     }
+    showError(QString());
 
     const int oldBar = m_viewBar;
     const bool wasPlaying = m_engine->isPlaying();
@@ -314,7 +547,9 @@ bool MainWindow::loadSongFile(const QString &path, bool keepPosition)
 
     if (!m_watcher->files().isEmpty())
         m_watcher->removePaths(m_watcher->files());
-    m_watcher->addPath(path);
+    if (m_editor->filePath() != path)
+        m_editor->openFile(path);
+    watchPaths();
 
     m_title->setText(song->title);
     QString info = song->artist;
@@ -505,7 +740,7 @@ void MainWindow::updateView()
 
 void MainWindow::openSong()
 {
-    const QString path = QFileDialog::getOpenFileName(this, tr("Open song"), songsDir(), tr("Song files (*.xml)"));
+    const QString path = QFileDialog::getOpenFileName(this, tr("Open song"), userSongsDir(), tr("Song files (*.xml)"));
     if (!path.isEmpty())
         loadSongFile(path);
 }
@@ -561,8 +796,12 @@ void MainWindow::showFormatHelp()
         "<tt>D</tt>/<tt>U</tt> full down/up strum, <tt>d</tt>/<tt>u</tt> light strum, "
         "<tt>X</tt> muted chuck, <tt>-</tt> rest, <tt>B</tt> bass note, <tt>A</tt> alternate bass, "
         "<tt>1</tt>-<tt>6</tt> pick a string (1 = high e), <tt>B+1</tt> pinch, <tt>&gt;D</tt> accent.<br><br>"
+        "<b>Built-in patterns</b> (no &lt;pattern&gt; needed): folk, pop, rock, drive, ballad, whole, half, "
+        "quarters, reggae, country, sixteenths, arpeggio, arpeggio-slow, travis, waltz, waltz-pick, six-eight, "
+        "six-eight-pick. A section without <tt>pattern</tt> uses folk.<br><br>"
         "<b>Bars:</b> chords separated by <tt>|</tt>; several chords in one bar share it evenly, "
         "or give lengths in beats: <tt>C:3 G:1</tt>. <tt>%</tt> repeats the previous chord, "
-        "<tt>N.C.</tt> is silence. See README.md for details."));
+        "<tt>N.C.</tt> is silence. Any chord name works (Tools &gt; Chord finder). See README.md for details.<br><br>"
+        "<b>Easiest:</b> File &gt; New song lets you type a plain chord sheet instead."));
     box.exec();
 }

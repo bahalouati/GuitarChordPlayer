@@ -20,6 +20,67 @@ reloads automatically, which makes writing your own songs quick.
 The guitar sound is generated in real time (Karplus-Strong plucked-string synthesis with a simple body
 resonance), so no audio files are needed and any chord or pattern you write just plays.
 
+## Adding your own songs
+
+**The quick way: File → New song (Ctrl+N)**, or click *+ Create a new song...* in the song list.
+Fill in the title and tempo, then type the chords as a simple chord sheet:
+
+```
+[Intro] arpeggio
+G | Cadd9 | Em | D
+
+[Verse] folk x2
+G | D | Em | C
+
+[Chorus] drive 96bpm
+C | G | D | Em
+
+[Verse]
+[Chorus] x2
+```
+
+- `[Name]` starts a section. After it you can add a **pattern** (from the list in the dialog), **`x2`** to
+  repeat it, and **`96bpm`** to change the tempo.
+- Bars are separated by `|`. Two chords in one bar split it (`Em C`), or set lengths in beats (`D:2 Dsus4:2`).
+- To play a section again, write just its name (`[Verse]`).
+
+Press *Create & Play*. The app saves the song as an XML file in **Documents\Guitar Chord Player\My Songs**
+and starts playing it.
+
+**Changing a song: Edit song (Ctrl+E)** opens the song's XML in a built-in editor. It checks what you type
+and shows problems in red. **Ctrl+S** saves and you hear the change straight away. *Insert* adds snippets
+(section, bars, pattern, chord fingering). If a song file has a mistake, the app says what's wrong and opens
+it in the editor.
+
+**Other ways to add songs:**
+
+- Drag and drop `.xml` files onto the window. They are copied into *My Songs*.
+- Put files in the *My Songs* folder yourself (*File → Open My Songs folder*). The list updates automatically.
+- Edit in any text editor you like. Saving the file reloads it in the app.
+
+**Chords:** any common chord name works. Around 40 open shapes are built in, and other chords (`F#m7`,
+`Ebmaj7`, `C#9`, `Bbsus4`, `Amin`, `A#m` …) get a barre shape worked out automatically. Use
+**Tools → Chord finder (Ctrl+K)** to check a chord's fingering and hear it strummed. For a fingering of your own,
+add `<chord name="..." frets="x32010"/>` to the song.
+
+**Patterns:** these built-in patterns can be used by name without defining them:
+
+| Name | Steps | Use |
+|---|---|---|
+| `folk` | `D - D U - U D U` | the classic strum (default for 4/4) |
+| `pop` | `D - D U D U D U` | busier eighths |
+| `rock` | `D D D D D D D D` | driving down-strums |
+| `drive` | `>D - D U X U D U` | accent + muted chuck |
+| `ballad` | `D - - - D - D U` | slow songs |
+| `whole` / `half` / `quarters` | | 1, 2 or 4 strums per bar |
+| `reggae` | `- u - u - u - u` | off-beat |
+| `country` | `B - d u A - d u` | bass-strum |
+| `sixteenths` | `>D - d u X - u d - u d u X - d u` | funky 16ths |
+| `arpeggio` / `arpeggio-slow` | `B 3 2 3 1 3 2 3` / `B 3 2 1` | picked chords |
+| `travis` | `B+1 3 A 2 B 3 A 2` | fingerpicking |
+| `waltz` / `waltz-pick` | `B - d u d u` / `B 3 2 1 2 3` | 3/4 (default for 3/4) |
+| `six-eight` / `six-eight-pick` | `D - U D - U` / `B 3 2 1 2 3` | 6/8 (default for 6/8) |
+
 ## Keyboard
 
 | Key | Action |
@@ -32,6 +93,10 @@ resonance), so no audio files are needed and any chord or pattern you write just
 | L | Loop current section |
 | M | Metronome |
 | F5 | Reload song |
+| Ctrl+N | New song |
+| Ctrl+E | Show / hide the song editor |
+| Ctrl+S | Save and replay (in the editor) |
+| Ctrl+K | Chord finder |
 
 ## Building on Windows (MSVC)
 
@@ -60,8 +125,7 @@ Command-line export without the GUI: `GuitarChordPlayer --render songs/amazing_g
 
 ## Song file format
 
-Put `.xml` files in the `songs/` folder (*File → Open songs folder*), or open one from anywhere with
-*File → Open song*. Here is a complete example:
+This is the file format that *New song* writes and the editor edits. Here is a complete example:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -106,6 +170,7 @@ Put `.xml` files in the `songs/` folder (*File → Open songs folder*), or open 
 | `bpm` | Tempo in beats per minute | 90 |
 | `beatsPerBar` | 4 for 4/4, 3 for 3/4. For 6/8, use `2` with `subdivision="3"` patterns (bpm = dotted quarters) | 4 |
 | `capo` | Capo fret. The sound is transposed and the shapes stay the same | 0 |
+| `pattern` | Pattern for sections that don't name one | `folk` |
 | `tuning` | Six notes, low to high, e.g. `"D2 A2 D3 G3 B3 E4"` for drop D | standard |
 
 ### `<chord>`
@@ -115,11 +180,14 @@ Put `.xml` files in the `songs/` folder (*File → Open songs folder*), or open 
 `fingers` (optional) gives the finger numbers in the same order: `1`-`4`, `T` = thumb, `0` = none.
 When one finger covers several strings on the same fret, the diagram draws a barre.
 
-Built-in chords: C, Cmaj7, C7, Cadd9, Cm, C#m, D, Dm, D7, Dm7, Dsus2, Dsus4, D/F#, E, Em, E7, Em7, Esus4,
+Chord names not in this list are worked out as barre chords (roots A-G with `#`/`b`, qualities
+`m 7 m7 maj7 sus2 sus4 5 6 m6 9 dim aug`, plus spellings like `min`, `-`, `M7`, and slash chords).
+Built-in shapes: C, Cmaj7, C7, Cadd9, Cm, C#m, D, Dm, D7, Dm7, Dsus2, Dsus4, D/F#, E, Em, E7, Em7, Esus4,
 E5, F, Fm, Fmaj7, F#, F#m, G, G7, G/B, Gm, Gsus4, G#m, A, Am, A7, Am7, Asus2, Asus4, A5, Bb, B, Bm, B7.
 
 ### `<pattern>`
 
+You only need this for patterns of your own. The built-in ones listed above work by name.
 One token per step, separated by spaces. `subdivision` is the number of steps per beat
 (2 = eighth notes, 4 = sixteenths, 3 = triplets / 6/8). A pattern shorter than a bar repeats, and a
 longer one runs across bars. `|` can be used for readability and is ignored.
@@ -142,7 +210,8 @@ Examples: `D - D U - U D U` (the common folk strum), `B 3 2 3 1 3 2 3` (arpeggio
 
 ### `<section>` and bars
 
-Attributes: `name`, `pattern`, plus optional `bpm` and `beatsPerBar` for that section only.
+Attributes: `name`, plus optional `pattern` (defaults to the song's), `bpm` and `beatsPerBar` for that
+section only.
 
 - `<bars>G | D | Em C | C</bars>`: bars are separated by `|`. Chords in the same bar split it evenly.
   Without any `|`, each chord is one bar: `<bars>G D Em C</bars>`.
@@ -169,8 +238,10 @@ finger would.
 
 | File | Role |
 |---|---|
-| `src/Song.*` | XML parsing, validation, flattening into a playable `Timeline` |
-| `src/ChordLibrary.*` | Built-in chord shapes |
+| `src/Song.*` | XML parsing, validation, built-in patterns, flattening into a playable `Timeline` |
+| `src/ChordSheet.*` | Plain-text chord sheet → song XML (New Song dialog) |
+| `src/NewSongDialog.*`, `src/SongEditor.*`, `src/ChordFinderDialog.*` | Song creation and editing tools |
+| `src/ChordLibrary.*` | Built-in chord shapes, name normalisation, generated barre chords |
 | `src/GuitarSynth.*` | Karplus-Strong strings, body resonance, metronome click |
 | `src/Sequencer.*` | Sample-accurate playback: patterns → strums/picks, loop, count-in, position history |
 | `src/AudioEngine.*` | `QAudioSink` in pull mode; converts output latency into what you actually hear |

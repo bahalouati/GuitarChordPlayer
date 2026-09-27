@@ -52,6 +52,7 @@ public:
     void setMetronome(bool on);
     void setCountIn(bool on);
     void setVolume(float v);
+    void previewChord(const ChordShape &chord);
 
     // Playback position as currently heard through the speakers.
     Sequencer::Snapshot snapshot();

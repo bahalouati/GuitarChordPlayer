@@ -5,6 +5,7 @@
 #include <QString>
 #include <QVector>
 #include <memory>
+#include <optional>
 
 // One step (sub-beat slot) of a strumming / picking pattern.
 struct PatternStep
@@ -36,7 +37,7 @@ struct BarDef
 struct Section
 {
     QString name;
-    QString pattern;      // pattern name
+    QString pattern;      // pattern name (empty = the song's default pattern)
     double bpm = 0.0;     // 0 = use the song tempo
     int beatsPerBar = 0;  // 0 = use the song meter
     QVector<BarDef> bars;
@@ -56,6 +57,7 @@ struct Song
     double bpm = 90.0;
     int beatsPerBar = 4;
     int capo = 0;
+    QString defaultPattern = QStringLiteral("folk"); // used by sections without a pattern
     std::array<int, 6> tuning{40, 45, 50, 55, 59, 64}; // MIDI notes, low E first
 
     QVector<ChordShape> chords;       // chords defined in the file (override built-ins)
@@ -63,16 +65,30 @@ struct Song
     QVector<Section> sections;
     QVector<ArrangementItem> arrangement;
 
-    const ChordShape *findChord(const QString &name) const;
-    int patternIndex(const QString &name) const;
+    // Chords defined in the file win over the built-in library.
+    std::optional<ChordShape> findChord(const QString &name) const;
+    // Patterns defined in the file win over the built-in presets.
+    const Pattern *findPattern(const QString &name) const;
     int sectionIndex(const QString &name) const;
 };
+
+// Ready-made patterns that songs can use by name without defining them.
+struct PatternPreset
+{
+    const char *name;
+    int subdivision;
+    const char *steps;
+    const char *description;
+};
+const QVector<PatternPreset> &patternPresets();
 
 // Parses a pattern text such as "D - D U - U D U" or "B 3 2 >1 A 3 2+1 3".
 bool parsePatternSteps(const QString &text, QVector<PatternStep> *out, QString *error);
 
 // Loads and validates a song XML file.
 std::shared_ptr<Song> loadSong(const QString &path, QString *error);
+// Same, from XML text in memory (path is only remembered, not read).
+std::shared_ptr<Song> loadSongFromData(const QByteArray &xml, const QString &path, QString *error);
 
 // A song flattened into a list of bars ready for playback.
 struct Timeline
@@ -84,7 +100,7 @@ struct Timeline
         double bpm = 90.0;
         int beatsPerBar = 4;
         int subdivision = 2;
-        int pattern = -1;      // index into song->patterns
+        int pattern = -1;      // index into patterns
         QVector<int> chordAtStep; // index into chords, -1 = no chord
 
         int stepCount() const { return beatsPerBar * subdivision; }
@@ -101,6 +117,7 @@ struct Timeline
 
     std::shared_ptr<const Song> song;
     QVector<ChordShape> chords;  // every chord used, resolved
+    QVector<Pattern> patterns;   // every pattern used, resolved
     QVector<Bar> bars;
     QVector<Play> plays;
 

@@ -7,22 +7,60 @@
 #include <QXmlStreamReader>
 #include <cmath>
 
-const ChordShape *Song::findChord(const QString &name) const
+std::optional<ChordShape> Song::findChord(const QString &name) const
 {
     for (const ChordShape &c : chords)
         if (c.name == name)
-            return &c;
-    const auto &lib = ChordLibrary::builtIn();
-    auto it = lib.constFind(name);
-    return it == lib.constEnd() ? nullptr : &it.value();
+            return c;
+    return ChordLibrary::lookup(name);
 }
 
-int Song::patternIndex(const QString &name) const
+const QVector<PatternPreset> &patternPresets()
 {
-    for (int i = 0; i < patterns.size(); ++i)
-        if (patterns[i].name == name)
-            return i;
-    return -1;
+    static const QVector<PatternPreset> presets = {
+        {"folk", 2, "D - D U - U D U", "The classic strum for almost any song in 4/4"},
+        {"pop", 2, "D - D U D U D U", "Busier eighth-note strum"},
+        {"rock", 2, "D D D D D D D D", "Driving down-strums on every eighth"},
+        {"drive", 2, ">D - D U X U D U", "Folk strum with an accent and a muted chuck on 3"},
+        {"ballad", 2, "D - - - D - D U", "Slow and open, for ballads"},
+        {"whole", 2, ">D - - - - - - -", "One strum per bar (endings, very slow parts)"},
+        {"half", 2, "D - - - D - - -", "Two strums per bar"},
+        {"quarters", 2, "D - D - D - D -", "A down-strum on every beat"},
+        {"reggae", 2, "- u - u - u - u", "Off-beat skank"},
+        {"country", 2, "B - d u A - d u", "Bass note, strum, alternate bass, strum"},
+        {"sixteenths", 4, ">D - d u X - u d - u d u X - d u", "Funky sixteenth-note strum"},
+        {"arpeggio", 2, "B 3 2 3 1 3 2 3", "Picked chord, bass then up and down the strings"},
+        {"arpeggio-slow", 1, "B 3 2 1", "Four picked notes per bar, for beginners"},
+        {"travis", 2, "B+1 3 A 2 B 3 A 2", "Travis fingerpicking with alternating bass"},
+        {"waltz", 2, "B - d u d u", "3/4: bass then two strums (use beatsPerBar=\"3\")"},
+        {"waltz-pick", 2, "B 3 2 1 2 3", "3/4 picked (use beatsPerBar=\"3\")"},
+        {"six-eight", 3, "D - U D - U", "6/8 strum (use beatsPerBar=\"2\")"},
+        {"six-eight-pick", 3, "B 3 2 1 2 3", "6/8 arpeggio (use beatsPerBar=\"2\")"},
+    };
+    return presets;
+}
+
+const Pattern *Song::findPattern(const QString &name) const
+{
+    for (const Pattern &p : patterns)
+        if (p.name == name)
+            return &p;
+    // Built-in presets are parsed once and shared.
+    static const QVector<Pattern> builtIns = [] {
+        QVector<Pattern> out;
+        for (const PatternPreset &pr : patternPresets()) {
+            Pattern p;
+            p.name = QString::fromLatin1(pr.name);
+            p.subdivision = pr.subdivision;
+            parsePatternSteps(QString::fromLatin1(pr.steps), &p.steps, nullptr);
+            out << p;
+        }
+        return out;
+    }();
+    for (const Pattern &p : builtIns)
+        if (p.name.compare(name, Qt::CaseInsensitive) == 0)
+            return &p;
+    return nullptr;
 }
 
 int Song::sectionIndex(const QString &name) const
@@ -153,10 +191,14 @@ std::shared_ptr<Song> loadSong(const QString &path, QString *error)
             *error = QStringLiteral("Cannot open %1: %2").arg(path, f.errorString());
         return nullptr;
     }
+    return loadSongFromData(f.readAll(), path, error);
+}
 
+std::shared_ptr<Song> loadSongFromData(const QByteArray &data, const QString &path, QString *error)
+{
     auto song = std::make_shared<Song>();
     song->filePath = path;
-    QXmlStreamReader xml(&f);
+    QXmlStreamReader xml(data);
     QString err;
     Section *currentSection = nullptr;
 
@@ -185,6 +227,8 @@ std::shared_ptr<Song> loadSong(const QString &path, QString *error)
                 song->beatsPerBar = a.value(QLatin1String("beatsPerBar")).toInt();
             if (a.hasAttribute(QLatin1String("capo")))
                 song->capo = a.value(QLatin1String("capo")).toInt();
+            if (a.hasAttribute(QLatin1String("pattern")))
+                song->defaultPattern = a.value(QLatin1String("pattern")).toString();
             if (a.hasAttribute(QLatin1String("tuning"))) {
                 const QStringList notes = a.value(QLatin1String("tuning")).toString()
                         .split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
@@ -244,8 +288,8 @@ std::shared_ptr<Song> loadSong(const QString &path, QString *error)
             s.pattern = a.value(QLatin1String("pattern")).toString();
             s.bpm = a.value(QLatin1String("bpm")).toDouble();
             s.beatsPerBar = a.value(QLatin1String("beatsPerBar")).toInt();
-            if (s.name.isEmpty() || s.pattern.isEmpty()) {
-                fail(QStringLiteral("section needs name and pattern attributes"));
+            if (s.name.isEmpty()) {
+                fail(QStringLiteral("section needs a name, e.g. <section name=\"Verse\" pattern=\"folk\">"));
                 break;
             }
             song->sections << s;
@@ -290,6 +334,10 @@ std::shared_ptr<Song> loadSong(const QString &path, QString *error)
                 break;
             }
             song->arrangement << it;
+        } else if (name != QLatin1String("chords") && name != QLatin1String("patterns")
+                   && name != QLatin1String("sections") && name != QLatin1String("arrangement")) {
+            fail(QStringLiteral("Unknown tag <%1>. Allowed tags: song, chords, chord, patterns, pattern, "
+                                "sections, section, bars, bar, arrangement, play").arg(name.toString()));
         }
     }
 
@@ -313,7 +361,7 @@ const PatternStep *Timeline::stepAt(int bar, int step) const
     const Bar &b = bars[bar];
     if (b.pattern < 0)
         return nullptr;
-    const Pattern &p = song->patterns[b.pattern];
+    const Pattern &p = patterns[b.pattern];
     const int idx = (b.barInSection * b.stepCount() + step) % p.steps.size();
     return &p.steps[idx];
 }
@@ -331,7 +379,7 @@ std::shared_ptr<Timeline> buildTimeline(std::shared_ptr<const Song> song, QStrin
         auto it = chordIndex.constFind(name);
         if (it != chordIndex.constEnd())
             return *it;
-        const ChordShape *shape = song->findChord(name);
+        const std::optional<ChordShape> shape = song->findChord(name);
         if (!shape) {
             if (!unknown.contains(name))
                 unknown << name;
@@ -356,18 +404,32 @@ std::shared_ptr<Timeline> buildTimeline(std::shared_ptr<const Song> song, QStrin
             return nullptr;
         }
         const Section &sec = song->sections[si];
-        const int pi = song->patternIndex(sec.pattern);
-        if (pi < 0) {
+        const QString patternName = sec.pattern.isEmpty() ? song->defaultPattern : sec.pattern;
+        const Pattern *found = song->findPattern(patternName);
+        if (!found) {
+            QStringList names;
+            for (const PatternPreset &pr : patternPresets())
+                names << QString::fromLatin1(pr.name);
             if (error)
-                *error = QStringLiteral("Section '%1' uses unknown pattern '%2'").arg(sec.name, sec.pattern);
+                *error = QStringLiteral("Section '%1' uses unknown pattern '%2'. Define it with <pattern>, "
+                                        "or use a built-in one: %3")
+                        .arg(sec.name, patternName, names.join(QStringLiteral(", ")));
             return nullptr;
+        }
+        int pi = -1;
+        for (int i = 0; i < tl->patterns.size(); ++i)
+            if (tl->patterns[i].name == found->name)
+                pi = i;
+        if (pi < 0) {
+            tl->patterns << *found;
+            pi = tl->patterns.size() - 1;
         }
         if (sec.bars.isEmpty()) {
             if (error)
                 *error = QStringLiteral("Section '%1' has no bars").arg(sec.name);
             return nullptr;
         }
-        const Pattern &pat = song->patterns[pi];
+        const Pattern &pat = tl->patterns[pi];
 
         for (int pass = 1; pass <= item.repeat; ++pass) {
             Timeline::Play play;
@@ -419,7 +481,8 @@ std::shared_ptr<Timeline> buildTimeline(std::shared_ptr<const Song> song, QStrin
 
     if (!unknown.isEmpty()) {
         if (error)
-            *error = QStringLiteral("Unknown chord(s): %1. Define them with <chord name=\"..\" frets=\"x32010\"/>.")
+            *error = QStringLiteral("Unknown chord(s): %1. Check the spelling, or define the fingering with "
+                                    "<chord name=\"..\" frets=\"x32010\"/> inside <chords>.")
                     .arg(unknown.join(QStringLiteral(", ")));
         return nullptr;
     }

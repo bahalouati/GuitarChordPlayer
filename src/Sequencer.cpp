@@ -96,6 +96,27 @@ void Sequencer::recordPos(int bar, int step, double length)
         m_history.pop_front();
 }
 
+void Sequencer::previewChord(const ChordShape &chord)
+{
+    static const int standard[6] = {40, 45, 50, 55, 59, 64};
+    int n = 0;
+    for (int i = 0; i < 6; ++i) {
+        if (chord.frets[size_t(i)] < 0) {
+            m_synth.damp(i, 0.05);
+            continue;
+        }
+        const int midi = standard[i] + chord.frets[size_t(i)];
+        Pending p;
+        p.delay = 1 + int(n++ * 0.018 * m_sr);
+        p.string = i;
+        p.freq = 440.0 * std::pow(2.0, (midi - 69) / 12.0);
+        p.velocity = 0.75f;
+        p.brightness = 0.7f;
+        p.muted = false;
+        m_pending.push_back(p);
+    }
+}
+
 void Sequencer::render(float *out, int frames)
 {
     for (int i = 0; i < frames; ++i) {

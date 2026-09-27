@@ -18,6 +18,10 @@ qt_add_executable(GuitarChordPlayer WIN32
     src/ChordDiagramWidget.h src/ChordDiagramWidget.cpp
     src/PatternWidget.h src/PatternWidget.cpp
     src/MainWindow.h src/MainWindow.cpp
+    src/ChordSheet.h src/ChordSheet.cpp
+    src/NewSongDialog.h src/NewSongDialog.cpp
+    src/SongEditor.h src/SongEditor.cpp
+    src/ChordFinderDialog.h src/ChordFinderDialog.cpp
 )
 
 target_link_libraries(GuitarChordPlayer PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Multimedia)

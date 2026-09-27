@@ -3,6 +3,8 @@
 #include <QRegularExpression>
 #include <QStringList>
 
+#include <iterator>
+
 int ChordShape::bassIndex() const
 {
     for (int i = 0; i < 6; ++i)
@@ -110,6 +112,154 @@ const QHash<QString, ChordShape> &builtIn()
         return h;
     }();
     return lib;
+}
+
+namespace {
+
+// Pitch class of a root note like "C", "F#", "Bb", or -1.
+int rootPitch(const QString &root)
+{
+    static const int base[] = {9, 11, 0, 2, 4, 5, 7}; // A B C D E F G
+    if (root.isEmpty() || root[0] < QLatin1Char('A') || root[0] > QLatin1Char('G'))
+        return -1;
+    int pc = base[root[0].unicode() - 'A'];
+    if (root.size() > 1)
+        pc += root[1] == QLatin1Char('#') ? 1 : -1;
+    return (pc + 12) % 12;
+}
+
+// Splits "F#m7" into root "F#" and quality "m7", normalising common spellings.
+bool splitChord(const QString &name, QString *root, QString *quality)
+{
+    static const QRegularExpression re(QStringLiteral("^([A-G])([#b]?)(.*)$"));
+    const auto m = re.match(name.trimmed());
+    if (!m.hasMatch())
+        return false;
+    *root = m.captured(1) + m.captured(2);
+    QString q = m.captured(3);
+    static const QList<QPair<QString, QString>> aliases = {
+        {QStringLiteral("min7"), QStringLiteral("m7")}, {QStringLiteral("-7"), QStringLiteral("m7")},
+        {QStringLiteral("M7"), QStringLiteral("maj7")}, {QStringLiteral("Maj7"), QStringLiteral("maj7")},
+        {QStringLiteral("min"), QStringLiteral("m")},   {QStringLiteral("mi"), QStringLiteral("m")},
+        {QStringLiteral("-"), QStringLiteral("m")},     {QStringLiteral("maj"), QString()},
+        {QStringLiteral("M"), QString()},               {QStringLiteral("sus"), QStringLiteral("sus4")},
+        {QStringLiteral("dom7"), QStringLiteral("7")},  {QStringLiteral("°"), QStringLiteral("dim")},
+        {QStringLiteral("+"), QStringLiteral("aug")},
+    };
+    for (const auto &a : aliases) {
+        if (q == a.first) {
+            q = a.second;
+            break;
+        }
+    }
+    *quality = q;
+    return true;
+}
+
+// Movable barre shapes. Offsets from the barre fret, low E first.
+struct Template { const char *quality; int frets[6]; int fingers[6]; };
+
+constexpr int X = -99; // muted string
+
+const Template eShapes[] = {
+    {"",     {0, 2, 2, 1, 0, 0},   {1, 3, 4, 2, 1, 1}},
+    {"m",    {0, 2, 2, 0, 0, 0},   {1, 3, 4, 1, 1, 1}},
+    {"7",    {0, 2, 0, 1, 0, 0},   {1, 3, 1, 2, 1, 1}},
+    {"m7",   {0, 2, 0, 0, 0, 0},   {1, 3, 1, 1, 1, 1}},
+    {"maj7", {0, X, 1, 1, 0, X}, {1, 0, 3, 4, 2, 0}},
+    {"sus4", {0, 2, 2, 2, 0, 0},   {1, 2, 3, 4, 1, 1}},
+    {"5",    {0, 2, 2, X, X, X},{1, 3, 4, 0, 0, 0}},
+    {"6",    {0, X, X, 1, 2, 0}, {1, 0, 0, 2, 3, 1}},
+    {"m6",   {0, 2, 2, 0, 2, 0},   {1, 2, 3, 1, 4, 1}},
+    {"9",    {0, 2, 0, 1, 0, 2},   {1, 3, 1, 2, 1, 4}},
+    {"dim",  {0, 1, 2, 0, X, X}, {1, 2, 4, 1, 0, 0}},
+    {"aug",  {0, 3, 2, 1, 1, 0},   {1, 4, 3, 2, 2, 1}},
+};
+const Template aShapes[] = {
+    {"",     {X, 0, 2, 2, 2, 0},  {0, 1, 3, 3, 3, 1}},
+    {"m",    {X, 0, 2, 2, 1, 0},  {0, 1, 3, 4, 2, 1}},
+    {"7",    {X, 0, 2, 0, 2, 0},  {0, 1, 3, 1, 4, 1}},
+    {"m7",   {X, 0, 2, 0, 1, 0},  {0, 1, 3, 1, 2, 1}},
+    {"maj7", {X, 0, 2, 1, 2, 0},  {0, 1, 3, 2, 4, 1}},
+    {"sus2", {X, 0, 2, 2, 0, 0},  {0, 1, 3, 4, 1, 1}},
+    {"sus4", {X, 0, 2, 2, 3, 0},  {0, 1, 2, 3, 4, 1}},
+    {"5",    {X, 0, 2, 2, X, X},{0, 1, 3, 4, 0, 0}},
+    {"6",    {X, 0, 2, 2, 2, 2},  {0, 1, 3, 3, 3, 3}},
+    {"m6",   {X, 0, 2, X, 1, 2}, {0, 1, 3, 0, 2, 4}},
+    {"9",    {X, 0, -1, 0, 0, 0},  {0, 2, 1, 3, 3, 3}},
+    {"dim",  {X, 0, 1, 2, 1, X}, {0, 1, 2, 4, 3, 0}},
+    {"aug",  {X, 0, 3, 2, 2, 1},  {0, 1, 4, 2, 3, 1}},
+};
+
+std::optional<ChordShape> fromTemplate(const Template *list, int count, const QString &quality, int fret)
+{
+    for (int i = 0; i < count; ++i) {
+        if (quality != QLatin1String(list[i].quality))
+            continue;
+        ChordShape c;
+        for (int s = 0; s < 6; ++s) {
+            c.frets[size_t(s)] = list[i].frets[s] == X ? -1 : fret + list[i].frets[s];
+            c.fingers[size_t(s)] = list[i].frets[s] == X ? 0 : list[i].fingers[s];
+        }
+        return c;
+    }
+    return std::nullopt;
+}
+
+} // namespace
+
+std::optional<ChordShape> lookup(const QString &rawName)
+{
+    const QString name = rawName.trimmed();
+    const auto &lib = builtIn();
+    auto found = [&](const QString &key) -> std::optional<ChordShape> {
+        auto it = lib.constFind(key);
+        if (it == lib.constEnd())
+            return std::nullopt;
+        ChordShape c = *it;
+        c.name = name;
+        return c;
+    };
+    if (auto c = found(name))
+        return c;
+
+    // Slash chord: try the full name's pieces, keep the displayed name.
+    QString main = name;
+    const int slash = name.indexOf(QLatin1Char('/'));
+    if (slash > 0)
+        main = name.left(slash);
+
+    QString root, quality;
+    if (!splitChord(main, &root, &quality))
+        return std::nullopt;
+    const int pc = rootPitch(root);
+    if (pc < 0)
+        return std::nullopt;
+
+    // Same chord with a different spelling of the root (A# = Bb) or quality (Amin = Am).
+    static const char *sharpNames[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+    static const char *flatNames[] = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
+    for (const char *r : {sharpNames[pc], flatNames[pc]})
+        if (auto c = found(QLatin1String(r) + quality))
+            return c;
+
+    // Generate a barre chord, choosing whichever of the E or A shape sits lower on the neck.
+    int eFret = (pc - 4 + 12) % 12;
+    int aFret = (pc - 9 + 12) % 12;
+    if (eFret == 0)
+        eFret = 12;
+    if (aFret == 0)
+        aFret = 12;
+    auto e = fromTemplate(eShapes, int(std::size(eShapes)), quality, eFret);
+    auto a = fromTemplate(aShapes, int(std::size(aShapes)), quality, aFret);
+    std::optional<ChordShape> best;
+    if (e && a)
+        best = eFret <= aFret ? e : a;
+    else
+        best = e ? e : a;
+    if (best)
+        best->name = name;
+    return best;
 }
 
 } // namespace ChordLibrary
