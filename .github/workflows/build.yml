@@ -55,12 +55,12 @@ jobs:
           name: GuitarChordPlayer-Setup
           path: GuitarChordPlayer-Setup.exe
       - name: Zip for release
-        if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+        if: github.event_name == 'push' && github.ref_name == 'main'
         shell: pwsh
         run: Compress-Archive -Path dist/* -DestinationPath GuitarChordPlayer-windows.zip
-      # Every push to the default branch becomes a release; the app updates itself from the latest one.
+      # Every push to main becomes a release; the app updates itself from the latest one.
       - name: Publish release
-        if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+        if: github.event_name == 'push' && github.ref_name == 'main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}

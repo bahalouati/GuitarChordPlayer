@@ -43,9 +43,9 @@ chord shapes change. **Auto** picks the capo with the easiest shapes, and the ch
 | Simplify+ | Simplify, plus the easiest capo (unless you chose one), plus easy shapes for barre chords: F → Fmaj7 shape, Bm → small Bm, B → B7, F#m / C#m / Gm / Cm … → small shapes without a full barre |
 
 **English and Arabic.** *Settings → Language* switches the interface between English and Arabic (right to left);
-*Automatic* follows the system language. *Settings → Chord names* shows chords as **C D E**, **Do Ré Mi** or
-**دو ري مي** (e.g. «لا م» for Am, «ري 7» for D7). Song files and chord sheets can use any of these spellings:
-`Am`, `Lam`, `لا م`, `لا مينور`, `سي بيمول`, `Fa#m` and `صول 7` are all understood.
+*Automatic* follows the system language. Chord names are always shown in English letters (Am, F, G7...).
+Song files and chord sheets may also spell chords in Arabic or solfège (`لا م`, `لا مينور`, `سي بيمول`, `صول 7`,
+`Lam`, `Fa#m`); they are shown as Am, Bb, G7, F#m...
 
 The guitar sound is generated in real time, so no audio files are needed and any chord or pattern you write just
 plays. Each string is a physical model: two slightly detuned vibrating polarizations, frequency-dependent damping,
@@ -175,7 +175,7 @@ not Program Files) and run `GuitarChordPlayer.exe`.
 
 ### Updates
 
-Every push to the main branch is built by GitHub Actions and published as a release (`build-<number>`).
+Every push to `main` is built by GitHub Actions and published as a release (`build-<number>`).
 The app checks for a newer release when it starts (at most every 12 hours; switch this off under *Help*),
 and *Help → Check for updates* checks right away. When there is a new build, a green **Update available** button
 appears in the status bar. *Install and restart* downloads the new version, replaces the app's files and starts it
@@ -360,7 +360,7 @@ finger would.
 | `src/AudioTrack.*` | Decoding recordings (Qt Multimedia) and WSOLA time stretching |
 | `src/ChordDetector.*` | Beat tracking, chroma and chord recognition for *New song from MP3* |
 | `installer.iss`, `resources/` | Windows installer (Inno Setup), icon and version info |
-| `src/ChordName.*` | Chord name parsing (English / solfège / Arabic), transposing, simplifying, display |
+| `src/ChordName.*` | Chord name parsing (English / solfège / Arabic), transposing, simplifying |
 | `src/Arranger.*` | Capo changes, Simplify / Simplify+ and chord difficulty |
 | `src/Translator.*`, `resources/i18n/ar.json` | Arabic interface (`scripts/check_translations.py` lists missing strings) |
 | `src/LlmPrompt.*`, `docs/LLM_PROMPT.md` | The LLM prompt (embedded in the app) and reading LLM answers |

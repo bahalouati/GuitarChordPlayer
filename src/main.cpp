@@ -72,7 +72,6 @@ int main(int argc, char *argv[])
 #endif
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/resources/app.png")));
     installLanguage(app);
-    ChordName::setNotation(ChordName::Notation(QSettings().value(QStringLiteral("notation"), 0).toInt()));
     MainWindow w;
     w.show();
     if (argc > 1)

@@ -16,7 +16,7 @@ struct Settings
 {
     int capo = kCapoAsSong;
     ChordName::Level level = ChordName::Level::AsWritten;
-    bool displayNames = true;    // rename chords in the chosen notation (English / Do Ré Mi / دو ري مي)
+    bool displayNames = true;    // show chord names in English letters, however the song spells them
 };
 
 // How hard a shape is to play: 0 = easy open chord, higher = barres, stretches, high frets.

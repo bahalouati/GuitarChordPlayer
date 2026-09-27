@@ -464,25 +464,6 @@ void MainWindow::buildMenus()
                      &MainWindow::addLyrics);
 
     QMenu *settings = menuBar()->addMenu(tr("&Settings"));
-    QMenu *names = settings->addMenu(tr("Chord &names"));
-    auto *nameGroup = new QActionGroup(this);
-    const QList<QPair<QString, ChordName::Notation>> notations = {
-        {tr("English letters (C D E F G A B)"), ChordName::Notation::English},
-        {tr("Solfège (Do Ré Mi Fa Sol La Si)"), ChordName::Notation::Solfege},
-        {tr("Arabic (دو ري مي فا صول لا سي)"), ChordName::Notation::Arabic},
-    };
-    for (const auto &n : notations) {
-        QAction *a = names->addAction(n.first);
-        a->setCheckable(true);
-        a->setChecked(ChordName::notation() == n.second);
-        nameGroup->addAction(a);
-        const ChordName::Notation value = n.second;
-        connect(a, &QAction::triggered, this, [this, value] {
-            ChordName::setNotation(value);
-            QSettings().setValue(QStringLiteral("notation"), int(value));
-            rearrange();
-        });
-    }
     buildLanguageMenu(settings->addMenu(tr("&Language")));
     QAction *detailed = settings->addAction(tr("Recognise 7th, sus, dim and aug chords in recordings"));
     detailed->setCheckable(true);

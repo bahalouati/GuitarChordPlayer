@@ -146,8 +146,12 @@ std::shared_ptr<const Timeline> arrange(std::shared_ptr<const Timeline> tl, cons
     const bool autoCapo = s.capo == kCapoAuto || (s.capo == kCapoAsSong && s.level == ChordName::Level::SimplifyPlus);
     int capo = autoCapo ? easiestCapo(*tl, s.level) : s.capo == kCapoAsSong ? songCapo : s.capo;
     capo = std::clamp(capo, 0, 11);
-    const bool english = ChordName::notation() == ChordName::Notation::English;
-    if (capo == songCapo && s.level == ChordName::Level::AsWritten && (english || !s.displayNames))
+    // Chord names are always shown in English letters (Am, F, G7...), also when the song file
+    // spells them in Arabic or solfège.
+    bool allEnglish = true;
+    for (const ChordShape &c : tl->chords)
+        allEnglish = allEnglish && ChordName::normalise(c.name) == c.name;
+    if (capo == songCapo && s.level == ChordName::Level::AsWritten && (allEnglish || !s.displayNames))
         return tl;
 
     auto out = std::make_shared<Timeline>(*tl);
@@ -184,8 +188,8 @@ std::shared_ptr<const Timeline> arrange(std::shared_ptr<const Timeline> tl, cons
                 shape.name = name;
             }
         }
-        if (s.displayNames && !english)
-            shape.name = ChordName::display(ChordName::normalise(shape.name));
+        if (s.displayNames)
+            shape.name = ChordName::normalise(shape.name);
         out->chords[i] = shape;
     }
     return out;
