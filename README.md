@@ -26,10 +26,26 @@ volumes. **Sync** nudges the recording a few milliseconds earlier or later if ne
 
 **New song from an MP3.** *File → New song from MP3 (Ctrl+I)* listens to a recording and writes the song for you. It
 finds the tempo, the beats, the bar lines (4/4 or 3/4) and the chords (major and minor), picks an easy capo position,
-and saves the song with the recording attached so you can play along right away. On test recordings with drums,
-bass and a melody it names the right chord about 93% of the time. Real songs vary, so fix any wrong chord by
+and saves the song with the recording attached so you can play along right away. Besides major and minor it
+recognises 7, m7, maj7, sus2, sus4, dim and aug chords (switch this off under *Settings* for major/minor only, or use
+the Chords menu to simplify them while playing). On test recordings with drums, bass and a melody it gets the right major/minor chord about 92% of the time, and the exact chord (including 7ths and sus chords) about 75% of the time. Real songs vary, so fix any wrong chord by
 ear in the live editor while it plays. *File → Attach recording to this song* adds a recording to an existing song.
 It finds where bar 1 starts and offers the recording's tempo if it differs from the song's.
+
+**Capo and easier chords.** The **Capo** menu plays a song with a different capo: it sounds the same, only the
+chord shapes change. **Auto** picks the capo with the easiest shapes, and the choice is remembered per song. The
+**Chords** menu makes songs easier to play:
+
+| Chords | What it does |
+|---|---|
+| As written | the chords exactly as in the song |
+| Simplify | plain major/minor chords: Cmaj7 → C, Am7 → Am, Dsus4 → D, G/B → G, Bdim → Bm. A chord only changes if that doesn't make it harder, so an easy B7 stays B7 instead of becoming a barre B |
+| Simplify+ | Simplify, plus the easiest capo (unless you chose one), plus easy shapes for barre chords: F → Fmaj7 shape, Bm → small Bm, B → B7, F#m / C#m / Gm / Cm … → small shapes without a full barre |
+
+**English and Arabic.** *Settings → Language* switches the interface between English and Arabic (right to left);
+*Automatic* follows the system language. *Settings → Chord names* shows chords as **C D E**, **Do Ré Mi** or
+**دو ري مي** (e.g. «لا م» for Am, «ري 7» for D7). Song files and chord sheets can use any of these spellings:
+`Am`, `Lam`, `لا م`, `لا مينور`, `سي بيمول`, `Fa#m` and `صول 7` are all understood.
 
 The guitar sound is generated in real time, so no audio files are needed and any chord or pattern you write just
 plays. Each string is a physical model: two slightly detuned vibrating polarizations, frequency-dependent damping,
@@ -344,6 +360,9 @@ finger would.
 | `src/AudioTrack.*` | Decoding recordings (Qt Multimedia) and WSOLA time stretching |
 | `src/ChordDetector.*` | Beat tracking, chroma and chord recognition for *New song from MP3* |
 | `installer.iss`, `resources/` | Windows installer (Inno Setup), icon and version info |
+| `src/ChordName.*` | Chord name parsing (English / solfège / Arabic), transposing, simplifying, display |
+| `src/Arranger.*` | Capo changes, Simplify / Simplify+ and chord difficulty |
+| `src/Translator.*`, `resources/i18n/ar.json` | Arabic interface (`scripts/check_translations.py` lists missing strings) |
 | `src/LlmPrompt.*`, `docs/LLM_PROMPT.md` | The LLM prompt (embedded in the app) and reading LLM answers |
 | `src/ChordLibrary.*` | Built-in chord shapes, name normalisation, generated barre chords |
 | `src/GuitarSynth.*` | Physically modelled strings, pick noise, body resonance, room reverb, metronome |

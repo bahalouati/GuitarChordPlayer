@@ -7,6 +7,8 @@
 
 LyricsWidget::LyricsWidget(QWidget *parent) : QWidget(parent)
 {
+    // Diagrams and timelines read left to right in every language.
+    setLayoutDirection(Qt::LeftToRight);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     setCursor(Qt::PointingHandCursor);
     setToolTip(tr("Click a lyric line to edit it"));

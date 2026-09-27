@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 
 #include "ChordDiagramWidget.h"
+#include "Arranger.h"
 #include "AudioTrack.h"
 #include "ChordDetector.h"
 #include "ChordFinderDialog.h"
@@ -14,10 +15,13 @@
 #include "WavWriter.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
 #include <QCloseEvent>
+#include <QComboBox>
+#include <QProcess>
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
@@ -91,6 +95,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     QSettings s;
     m_tempo->setValue(s.value(QStringLiteral("tempo"), 100).toInt());
+    {
+        const QSignalBlocker block(m_chordsBox);
+        const int idx = m_chordsBox->findData(s.value(QStringLiteral("chordLevel"), 0).toInt());
+        m_chordsBox->setCurrentIndex(std::max(0, idx));
+    }
     m_volume->setValue(s.value(QStringLiteral("volume"), 80).toInt());
     m_recordingVolume->setValue(s.value(QStringLiteral("recordingVolume"), 80).toInt());
     m_metronome->setChecked(s.value(QStringLiteral("metronome"), false).toBool());
@@ -277,6 +286,40 @@ void MainWindow::buildUi()
     m_tempoLabel->setMinimumWidth(110);
     tr1->addWidget(m_tempoLabel);
 
+    // Capo and chord simplification: change what you play, not what you hear.
+    tr1->addSpacing(12);
+    tr1->addWidget(new QLabel(tr("Capo")));
+    m_capoBox = new QComboBox;
+    m_capoBox->setFocusPolicy(Qt::NoFocus);
+    m_capoBox->setToolTip(tr("Play the song with a different capo. It sounds the same; the chord shapes change.\n"
+                             "Auto picks the capo with the easiest shapes."));
+    m_capoBox->addItem(tr("As in song"), Arranger::kCapoAsSong);
+    m_capoBox->addItem(tr("Auto (easiest)"), Arranger::kCapoAuto);
+    m_capoBox->addItem(tr("No capo"), 0);
+    for (int c = 1; c <= 9; ++c)
+        m_capoBox->addItem(tr("Fret %1").arg(c), c);
+    tr1->addWidget(m_capoBox);
+    tr1->addWidget(new QLabel(tr("Chords")));
+    m_chordsBox = new QComboBox;
+    m_chordsBox->setFocusPolicy(Qt::NoFocus);
+    m_chordsBox->addItem(tr("As written"), int(ChordName::Level::AsWritten));
+    m_chordsBox->addItem(tr("Simplify"), int(ChordName::Level::Simplify));
+    m_chordsBox->addItem(tr("Simplify+"), int(ChordName::Level::SimplifyPlus));
+    m_chordsBox->setItemData(0, tr("Play the chords exactly as the song has them"), Qt::ToolTipRole);
+    m_chordsBox->setItemData(1, tr("Plain major and minor chords: Cmaj7 → C, Am7 → Am, Dsus4 → D, G/B → G"), Qt::ToolTipRole);
+    m_chordsBox->setItemData(2, tr("Simplify, pick the easiest capo, and replace barre chords with easy shapes "
+                                   "(F → Fmaj7 shape, Bm → small Bm, B → B7...)"), Qt::ToolTipRole);
+    tr1->addWidget(m_chordsBox);
+    connect(m_capoBox, &QComboBox::currentIndexChanged, this, [this] {
+        if (m_song)
+            QSettings().setValue(QStringLiteral("capo/") + m_song->filePath, m_capoBox->currentData());
+        rearrange();
+    });
+    connect(m_chordsBox, &QComboBox::currentIndexChanged, this, [this] {
+        QSettings().setValue(QStringLiteral("chordLevel"), m_chordsBox->currentData());
+        rearrange();
+    });
+
     m_loop = new QCheckBox(tr("Loop section"));
     m_loop->setFocusPolicy(Qt::NoFocus);
     connect(m_loop, &QCheckBox::toggled, this, &MainWindow::applyLoop);
@@ -419,6 +462,33 @@ void MainWindow::buildMenus()
     tools->addAction(tr("&Chord finder..."), QKeySequence(Qt::CTRL | Qt::Key_K), this, &MainWindow::showChordFinder);
     tools->addAction(tr("Add &lyrics to this song..."), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_L), this,
                      &MainWindow::addLyrics);
+
+    QMenu *settings = menuBar()->addMenu(tr("&Settings"));
+    QMenu *names = settings->addMenu(tr("Chord &names"));
+    auto *nameGroup = new QActionGroup(this);
+    const QList<QPair<QString, ChordName::Notation>> notations = {
+        {tr("English letters (C D E F G A B)"), ChordName::Notation::English},
+        {tr("Solfège (Do Ré Mi Fa Sol La Si)"), ChordName::Notation::Solfege},
+        {tr("Arabic (دو ري مي فا صول لا سي)"), ChordName::Notation::Arabic},
+    };
+    for (const auto &n : notations) {
+        QAction *a = names->addAction(n.first);
+        a->setCheckable(true);
+        a->setChecked(ChordName::notation() == n.second);
+        nameGroup->addAction(a);
+        const ChordName::Notation value = n.second;
+        connect(a, &QAction::triggered, this, [this, value] {
+            ChordName::setNotation(value);
+            QSettings().setValue(QStringLiteral("notation"), int(value));
+            rearrange();
+        });
+    }
+    buildLanguageMenu(settings->addMenu(tr("&Language")));
+    QAction *detailed = settings->addAction(tr("Recognise 7th, sus, dim and aug chords in recordings"));
+    detailed->setCheckable(true);
+    detailed->setChecked(QSettings().value(QStringLiteral("detailedDetection"), true).toBool());
+    detailed->setToolTip(tr("Off: only major and minor chords are detected"));
+    connect(detailed, &QAction::toggled, this, [](bool on) { QSettings().setValue(QStringLiteral("detailedDetection"), on); });
 
     QMenu *help = menuBar()->addMenu(tr("&Help"));
     help->addAction(tr("Song XML format..."), this, &MainWindow::showFormatHelp);
@@ -712,26 +782,29 @@ void MainWindow::applySong(std::shared_ptr<Song> song, std::shared_ptr<Timeline>
     const bool keep = keepPosition && m_timeline;
     m_song = song;
     m_timeline = tl;
+    {
+        // The capo chosen for this song earlier (or "as in song").
+        const QSignalBlocker block(m_capoBox);
+        const int capo = QSettings().value(QStringLiteral("capo/") + song->filePath, Arranger::kCapoAsSong).toInt();
+        const int idx = m_capoBox->findData(capo);
+        m_capoBox->setCurrentIndex(idx >= 0 ? idx : 0);
+    }
+    Arranger::Settings as;
+    as.capo = m_capoBox->currentData().toInt();
+    as.level = ChordName::Level(m_chordsBox->currentData().toInt());
+    m_view = Arranger::arrange(tl, as);
     if (keep)
-        m_engine->replaceTimeline(tl);
+        m_engine->replaceTimeline(m_view);
     else
-        m_engine->setTimeline(tl);
-    m_pattern->setTimeline(tl);
+        m_engine->setTimeline(m_view);
+    m_pattern->setTimeline(m_view);
     applyRecording(!keep);
-    m_lyrics->setTimeline(tl);
+    m_lyrics->setTimeline(m_view);
     m_lyrics->setVisible(!tl->lyricLines.isEmpty());
     applyTempo();
 
     m_title->setText(song->title);
-    QString info = song->artist;
-    if (!info.isEmpty())
-        info += QStringLiteral("  ·  ");
-    info += tr("%1 BPM  ·  %2 beats per bar").arg(song->bpm).arg(song->beatsPerBar);
-    if (song->capo > 0)
-        info += tr("  ·  Capo %1").arg(song->capo);
-    if (!song->audioFile.isEmpty())
-        info += tr("  ·  ♪ %1").arg(QFileInfo(song->audioFile).fileName());
-    m_info->setText(info);
+    updateInfo();
     setWindowTitle(tr("%1 - Guitar Chord Player").arg(song->title));
 
     m_sectionList->clear();
@@ -873,7 +946,7 @@ void MainWindow::updateView()
     // Chord diagrams
     const int step = s.countIn ? 0 : std::clamp(s.step, 0, b.stepCount() - 1);
     const int chord = b.chordAtStep.value(step, -1);
-    m_current->setChord(chord >= 0 ? &m_timeline->chords[chord] : nullptr);
+    m_current->setChord(chord >= 0 ? &m_view->chords[chord] : nullptr);
     m_current->setGlow(s.stringGlow);
 
     // Find the next different chord and how many beats away it is.
@@ -895,7 +968,7 @@ void MainWindow::updateView()
         st = 0;
     }
     if (nextChord >= 0 || beats > 0) {
-        m_next->setChord(nextChord >= 0 ? &m_timeline->chords[nextChord] : nullptr);
+        m_next->setChord(nextChord >= 0 ? &m_view->chords[nextChord] : nullptr);
         const int whole = int(std::ceil(beats - s.stepFraction / b.subdivision - 1e-6));
         m_next->setCaption(tr("Next - in %n beat(s)", nullptr, std::max(1, whole)));
     } else {
@@ -932,7 +1005,7 @@ void MainWindow::exportWav()
         return;
     QApplication::setOverrideCursor(Qt::WaitCursor);
     QString err;
-    const bool ok = exportSongToWav(m_timeline, path, m_tempo->value() / 100.0, &err);
+    const bool ok = exportSongToWav(m_view, path, m_tempo->value() / 100.0, &err, m_clip, m_song->audioOffset);
     QApplication::restoreOverrideCursor();
     if (ok)
         m_status->setText(tr("Exported %1").arg(path));
@@ -1056,10 +1129,11 @@ bool MainWindow::analyseRecording(const AudioClip &clip, DetectedSong *out)
     progress.setMinimumDuration(0);
     std::atomic<bool> cancel{false};
     std::atomic<int> percent{0};
+    const bool detailed = QSettings().value(QStringLiteral("detailedDetection"), true).toBool();
     bool ok = false;
     QString err;
     QThread *worker = QThread::create([&] {
-        ok = detectChords(clip, out, &err, [&](double f) { percent = int(f * 100); }, &cancel);
+        ok = detectChords(clip, out, &err, [&](double f) { percent = int(f * 100); }, &cancel, detailed);
     });
     QEventLoop loop;
     connect(worker, &QThread::finished, &loop, &QEventLoop::quit);
@@ -1238,4 +1312,70 @@ void MainWindow::addLyrics()
     loadSongFile(target, target == m_song->filePath);
     m_status->setText(inMySongs ? tr("Lyrics added (the previous version is kept as %1.bak)").arg(QFileInfo(target).fileName())
                                 : tr("Lyrics added to a copy in My Songs: %1").arg(QFileInfo(target).fileName()));
+}
+
+void MainWindow::updateInfo()
+{
+    if (!m_song)
+        return;
+    QString info = m_song->artist;
+    if (!info.isEmpty())
+        info += QStringLiteral("  ·  ");
+    info += tr("%1 BPM  ·  %2 beats per bar").arg(m_song->bpm).arg(m_song->beatsPerBar);
+    const int capo = m_view ? Arranger::capoOf(*m_view) : m_song->capo;
+    if (capo != m_song->capo)
+        info += capo > 0 ? tr("  ·  Capo %1 (song: %2)").arg(capo).arg(m_song->capo)
+                         : tr("  ·  No capo (song: %1)").arg(m_song->capo);
+    else if (capo > 0)
+        info += tr("  ·  Capo %1").arg(capo);
+    const auto level = ChordName::Level(m_chordsBox->currentData().toInt());
+    if (level == ChordName::Level::Simplify)
+        info += tr("  ·  Simplified chords");
+    else if (level == ChordName::Level::SimplifyPlus)
+        info += tr("  ·  Simplified chords (easy shapes)");
+    if (!m_song->audioFile.isEmpty())
+        info += tr("  ·  ♪ %1").arg(QFileInfo(m_song->audioFile).fileName());
+    m_info->setText(info);
+}
+
+void MainWindow::rearrange()
+{
+    if (!m_timeline)
+        return;
+    Arranger::Settings as;
+    as.capo = m_capoBox->currentData().toInt();
+    as.level = ChordName::Level(m_chordsBox->currentData().toInt());
+    m_view = Arranger::arrange(m_timeline, as);
+    m_engine->replaceTimeline(m_view);
+    m_pattern->setTimeline(m_view);
+    m_lyrics->setTimeline(m_view);
+    updateInfo();
+    updateView();
+}
+
+void MainWindow::buildLanguageMenu(QMenu *menu)
+{
+    auto *group = new QActionGroup(this);
+    const QString current = QSettings().value(QStringLiteral("language"), QStringLiteral("auto")).toString();
+    const QList<QPair<QString, QString>> langs = {
+        {tr("Automatic (system language)"), QStringLiteral("auto")},
+        {QStringLiteral("English"), QStringLiteral("en")},
+        {QStringLiteral("العربية"), QStringLiteral("ar")},
+    };
+    for (const auto &l : langs) {
+        QAction *a = menu->addAction(l.first);
+        a->setCheckable(true);
+        a->setChecked(current == l.second);
+        group->addAction(a);
+        const QString code = l.second;
+        connect(a, &QAction::triggered, this, [this, code] {
+            QSettings().setValue(QStringLiteral("language"), code);
+            const auto r = QMessageBox::question(this, tr("Language"),
+                                                 tr("The new language is used after a restart. Restart now?"));
+            if (r == QMessageBox::Yes && close()) {
+                QProcess::startDetached(QCoreApplication::applicationFilePath(), {});
+                QCoreApplication::quit();
+            }
+        });
+    }
 }

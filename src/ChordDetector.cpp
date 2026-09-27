@@ -1,5 +1,9 @@
 #include "ChordDetector.h"
 
+#include "Arranger.h"
+#include "ChordLibrary.h"
+#include "ChordName.h"
+
 #include <QXmlStreamWriter>
 #include <QtGlobal>
 #include <cstdio>
@@ -104,46 +108,10 @@ std::vector<float> analysisSignal(const AudioClip &clip, int *rate)
     return out;
 }
 
-struct ChordLabel
-{
-    int root = -1;      // 0..11, -1 = no chord
-    bool minor = false;
-    QString name() const
-    {
-        if (root < 0)
-            return QStringLiteral("N.C.");
-        return QString::fromLatin1(kNames[root]) + (minor ? QStringLiteral("m") : QString());
-    }
-};
-
-QString transposeName(const QString &chord, int semis)
-{
-    if (chord == QLatin1String("N.C."))
-        return chord;
-    for (int r = 0; r < 12; ++r) {
-        const QString n = QString::fromLatin1(kNames[r]);
-        if (chord.startsWith(n) && (chord.size() == n.size() || chord.mid(n.size()) == QLatin1String("m"))) {
-            if (n.size() == 1 && chord.size() > 1 && (chord[1] == QLatin1Char('#') || chord[1] == QLatin1Char('b')))
-                continue;
-            return QString::fromLatin1(kNames[((r + semis) % 12 + 12) % 12]) + chord.mid(n.size());
-        }
-    }
-    return chord;
-}
-
-int shapeCost(const QString &chord)
-{
-    static const QStringList easy = {QStringLiteral("C"), QStringLiteral("D"), QStringLiteral("E"),
-                                     QStringLiteral("G"), QStringLiteral("A"), QStringLiteral("Am"),
-                                     QStringLiteral("Em"), QStringLiteral("Dm"), QStringLiteral("N.C.")};
-    static const QStringList medium = {QStringLiteral("F"), QStringLiteral("Bm")};
-    return easy.contains(chord) ? 0 : medium.contains(chord) ? 1 : 2;
-}
-
 } // namespace
 
 bool detectChords(const AudioClip &clip, DetectedSong *out, QString *error,
-                  const std::function<void(double)> &progress, const std::atomic<bool> *cancel)
+                  const std::function<void(double)> &progress, const std::atomic<bool> *cancel, bool detailed)
 {
     auto cancelled = [&] { return cancel && cancel->load(); };
     auto report = [&](double base, double span) {
@@ -424,10 +392,54 @@ bool detectChords(const AudioClip &clip, DetectedSong *out, QString *error,
     std::sort(sortedE.begin(), sortedE.end());
     const float medianE = sortedE.empty() ? 0.f : sortedE[sortedE.size() / 2];
 
-    // 25 states: 12 major, 12 minor, no-chord.
-    const int S = 25;
-    std::vector<std::array<double, 25>> emission(static_cast<size_t>(nBeats));
-    std::vector<double> bestFit(size_t(nBeats), 0.0);
+    // States: 12 roots x the chord types below, plus no-chord (last).
+    // Extended types start with a small handicap so a plain triad wins unless the extra
+    // note is clearly there.
+    struct Quality { const char *name; int tones[4]; int count; double prior; };
+    // Tuned on test mixes (see the README): 7ths are often a single quiet string in a guitar voicing.
+    constexpr double kSeventhWeight = 0.7;
+    static const Quality allQualities[] = {
+        {"", {0, 4, 7, 0}, 3, 0.0},      {"m", {0, 3, 7, 0}, 3, 0.0},
+        {"7", {0, 4, 7, 10}, 4, 0.0},    {"m7", {0, 3, 7, 10}, 4, 0.0},
+        {"maj7", {0, 4, 7, 11}, 4, 0.05}, {"sus4", {0, 5, 7, 0}, 3, 0.08},
+        {"sus2", {0, 2, 7, 0}, 3, 0.09}, {"dim", {0, 3, 6, 0}, 3, 0.08},
+        {"aug", {0, 4, 8, 0}, 3, 0.12},
+    };
+    const int NQ = detailed ? int(std::size(allQualities)) : 2;
+    // Priors and the weight of a 7th in the templates (tunable for testing via GCP_PRIORS).
+    double prior[9], seventhWeight = kSeventhWeight;
+    for (int q = 0; q < 9; ++q)
+        prior[q] = allQualities[q].prior;
+    if (qEnvironmentVariableIsSet("GCP_PRIORS")) {
+        const QStringList v = qEnvironmentVariable("GCP_PRIORS").split(QLatin1Char(','));
+        for (int q = 2; q < 9 && q - 2 < v.size(); ++q)
+            prior[q] = v[q - 2].toDouble();
+        if (v.size() > 7)
+            seventhWeight = v[7].toDouble();
+    }
+    const int S = 12 * NQ + 1;
+    const int NC = S - 1;
+    std::vector<std::vector<double>> emission(static_cast<size_t>(nBeats), std::vector<double>(static_cast<size_t>(S)));
+    std::vector<double> bestFit(static_cast<size_t>(nBeats), 0.0);
+    // Zero-mean, unit-length templates.
+    std::vector<std::array<double, 12>> templ(static_cast<size_t>(12 * NQ));
+    for (int q = 0; q < NQ; ++q) {
+        for (int root = 0; root < 12; ++root) {
+            std::array<double, 12> t{};
+            const int k = allQualities[q].count;
+            for (int i = 0; i < 12; ++i)
+                t[size_t(i)] = -double(k) / (12 - k);
+            for (int j = 0; j < k; ++j)
+                t[size_t((root + allQualities[q].tones[j]) % 12)] = j == 3 ? seventhWeight : 1.0;
+            double n = 0;
+            for (double v : t)
+                n += v * v;
+            n = std::sqrt(n);
+            for (double &v : t)
+                v /= n;
+            templ[size_t(q * 12 + root)] = t;
+        }
+    }
     for (int k = 0; k < nBeats; ++k) {
         std::array<float, 12> c = beatChroma[size_t(k)], bs = beatBass[size_t(k)];
         // Normalise and remove the average level so only the pattern counts.
@@ -448,72 +460,67 @@ bool detectChords(const AudioClip &clip, DetectedSong *out, QString *error,
         normalise(c);
         normalise(bs);
         const bool silent = beatEnergy[size_t(k)] < 0.08f * medianE;
-        for (int s = 0; s < 24; ++s) {
-            const int root = s % 12;
-            const bool minor = s >= 12;
-            const int third = (root + (minor ? 3 : 4)) % 12, fifth = (root + 7) % 12;
-            // Zero-mean template: +1 on chord tones, -3/9 elsewhere (unit length).
+        for (int st = 0; st < NC; ++st) {
+            const int q = st / 12, root = st % 12;
+            const auto &t = templ[size_t(st)];
             double dot = 0;
-            for (int i = 0; i < 12; ++i) {
-                const bool tone = i == root || i == third || i == fifth;
-                dot += c[size_t(i)] * (tone ? 1.0 : -1.0 / 3.0);
-            }
-            dot /= std::sqrt(3.0 + 9.0 / 9.0);
+            for (int i = 0; i < 12; ++i)
+                dot += c[size_t(i)] * t[size_t(i)];
+            const int fifth = (root + allQualities[q].tones[2]) % 12;
             const double bassBonus = 0.25 * bs[size_t(root)] + 0.08 * bs[size_t(fifth)];
-            const double v = dot + bassBonus;
-            emission[size_t(k)][size_t(s)] = 12.0 * v;
+            emission[size_t(k)][size_t(st)] = 12.0 * (dot + bassBonus - prior[q]);
             bestFit[size_t(k)] = std::max(bestFit[size_t(k)], dot);
         }
-        emission[size_t(k)][24] = silent ? 8.0 : -6.0;
+        emission[size_t(k)][size_t(NC)] = silent ? 8.0 : -6.0;
     }
 
     // ---- 7. Viterbi smoothing: chords usually last several beats
     const double stay = std::log(0.82), change = std::log(0.18 / (S - 1));
-    std::vector<std::array<double, 25>> dp(static_cast<size_t>(nBeats));
-    std::vector<std::array<int, 25>> from(static_cast<size_t>(nBeats));
-    for (int s = 0; s < S; ++s)
-        dp[0][size_t(s)] = emission[0][size_t(s)];
+    std::vector<std::vector<double>> dp(static_cast<size_t>(nBeats), std::vector<double>(static_cast<size_t>(S)));
+    std::vector<std::vector<int>> from(static_cast<size_t>(nBeats), std::vector<int>(static_cast<size_t>(S)));
+    for (int st = 0; st < S; ++st)
+        dp[0][size_t(st)] = emission[0][size_t(st)];
     for (int k = 1; k < nBeats; ++k) {
         int bestPrev = 0;
-        for (int s = 1; s < S; ++s)
-            if (dp[size_t(k - 1)][size_t(s)] > dp[size_t(k - 1)][size_t(bestPrev)])
-                bestPrev = s;
-        for (int s = 0; s < S; ++s) {
-            const double viaStay = dp[size_t(k - 1)][size_t(s)] + stay;
+        for (int st = 1; st < S; ++st)
+            if (dp[size_t(k - 1)][size_t(st)] > dp[size_t(k - 1)][size_t(bestPrev)])
+                bestPrev = st;
+        for (int st = 0; st < S; ++st) {
+            const double viaStay = dp[size_t(k - 1)][size_t(st)] + stay;
             const double viaChange = dp[size_t(k - 1)][size_t(bestPrev)] + change;
-            if (viaStay >= viaChange || bestPrev == s) {
-                dp[size_t(k)][size_t(s)] = viaStay + emission[size_t(k)][size_t(s)];
-                from[size_t(k)][size_t(s)] = s;
+            if (viaStay >= viaChange || bestPrev == st) {
+                dp[size_t(k)][size_t(st)] = viaStay + emission[size_t(k)][size_t(st)];
+                from[size_t(k)][size_t(st)] = st;
             } else {
-                dp[size_t(k)][size_t(s)] = viaChange + emission[size_t(k)][size_t(s)];
-                from[size_t(k)][size_t(s)] = bestPrev;
+                dp[size_t(k)][size_t(st)] = viaChange + emission[size_t(k)][size_t(st)];
+                from[size_t(k)][size_t(st)] = bestPrev;
             }
         }
     }
+    auto stateName = [&](int st) {
+        return st == NC ? QStringLiteral("N.C.")
+                        : QString::fromLatin1(kNames[st % 12]) + QString::fromLatin1(allQualities[st / 12].name);
+    };
     const bool debug = qEnvironmentVariableIsSet("GCP_DEBUG");
     if (debug) {
         fprintf(stderr, "tuning %.0f cents, T %.4f t0 %.3f beats %d\n", bestCents, T, t0, nBeats);
         for (int k = 0; k < std::min(nBeats, 24); ++k) {
-            const auto &c = beatChroma[size_t(k)];
-            fprintf(stderr, "beat %2d:", k);
-            for (int i = 0; i < 12; ++i)
-                fprintf(stderr, " %s:%.0f", kNames[i], c[size_t(i)]);
-            int bs = 0;
-            for (int s2 = 1; s2 < 24; ++s2)
-                if (emission[size_t(k)][size_t(s2)] > emission[size_t(k)][size_t(bs)])
-                    bs = s2;
-            fprintf(stderr, "  -> %s%s\n", kNames[bs % 12], bs >= 12 ? "m" : "");
+            int b = 0;
+            for (int st = 1; st < NC; ++st)
+                if (emission[size_t(k)][size_t(st)] > emission[size_t(k)][size_t(b)])
+                    b = st;
+            fprintf(stderr, "beat %2d -> %s\n", k, qPrintable(stateName(b)));
         }
     }
-    std::vector<ChordLabel> labels(static_cast<size_t>(nBeats));
+    std::vector<QString> labels(static_cast<size_t>(nBeats));
     if (nBeats > 0) {
-        int s = 0;
+        int st = 0;
         for (int i = 1; i < S; ++i)
-            if (dp[size_t(nBeats - 1)][size_t(i)] > dp[size_t(nBeats - 1)][size_t(s)])
-                s = i;
+            if (dp[size_t(nBeats - 1)][size_t(i)] > dp[size_t(nBeats - 1)][size_t(st)])
+                st = i;
         for (int k = nBeats - 1; k >= 0; --k) {
-            labels[size_t(k)] = s == 24 ? ChordLabel{} : ChordLabel{s % 12, s >= 12};
-            s = from[size_t(k)][size_t(s)];
+            labels[size_t(k)] = stateName(st);
+            st = from[size_t(k)][size_t(st)];
         }
     }
     if (progress)
@@ -522,7 +529,7 @@ bool detectChords(const AudioClip &clip, DetectedSong *out, QString *error,
     // ---- 8. Meter and bar lines: chords change on bar lines far more often than elsewhere
     std::vector<int> changes;
     for (int k = 1; k < nBeats; ++k)
-        if (labels[size_t(k)].name() != labels[size_t(k - 1)].name())
+        if (labels[size_t(k)] != labels[size_t(k - 1)])
             changes.push_back(k);
     int bestBpb = 4, bestPhase = 0;
     double bestFitScore = -1;
@@ -561,12 +568,27 @@ bool detectChords(const AudioClip &clip, DetectedSong *out, QString *error,
     QVector<QStringList> bars;
     for (int k = startBeat; k < nBeats; k += bestBpb) {
         auto majority = [&](int a, int b) {
-            std::map<QString, int> votes;
+            // Vote on the base chord first (G and G7 count together), then take the most
+            // common variant of the winner, so a bar of G G7 G7 G7 becomes G7, not a split vote.
+            std::map<QString, int> base, exact;
             for (int i = a; i < b; ++i) {
-                const QString n = (i >= 0 && i < nBeats) ? labels[size_t(i)].name() : QStringLiteral("N.C.");
-                votes[n] += (i == a) ? 2 : 1; // the chord on the beat counts double
+                const QString n = (i >= 0 && i < nBeats) ? labels[size_t(i)] : QStringLiteral("N.C.");
+                const int w = (i == a) ? 2 : 1; // the chord on the beat counts double
+                base[n == QLatin1String("N.C.") ? n : ChordName::simplify(n)] += w;
+                exact[n] += w;
             }
-            return std::max_element(votes.begin(), votes.end(), [](auto &x, auto &y) { return x.second < y.second; })->first;
+            const QString winner = std::max_element(base.begin(), base.end(),
+                                                    [](auto &x, auto &y) { return x.second < y.second; })->first;
+            QString best;
+            int bestVotes = -1;
+            for (const auto &e : exact) {
+                const QString b2 = e.first == QLatin1String("N.C.") ? e.first : ChordName::simplify(e.first);
+                if (b2 == winner && e.second > bestVotes) {
+                    best = e.first;
+                    bestVotes = e.second;
+                }
+            }
+            return best;
         };
         if (bestBpb == 4) {
             const QString a = majority(k, k + 2), b = majority(k + 2, k + 4);
@@ -592,12 +614,18 @@ bool detectChords(const AudioClip &clip, DetectedSong *out, QString *error,
                 count[c] += 2 / int(b.size());
     out->key = count.empty() ? QString()
                              : std::max_element(count.begin(), count.end(), [](auto &x, auto &y) { return x.second < y.second; })->first;
-    int bestCapo = 0, bestCost = INT32_MAX;
+    // Capo: where the shapes are easiest to play.
+    int bestCapo = 0;
+    double bestCost = 1e30;
     for (int capo = 0; capo <= 5; ++capo) {
-        int cost = 0;
+        double cost = capo * 0.15;
         for (const auto &b : bars)
-            for (const QString &c : b)
-                cost += shapeCost(transposeName(c, -capo));
+            for (const QString &c : b) {
+                if (c == QLatin1String("N.C."))
+                    continue;
+                const auto shape = ChordLibrary::lookup(ChordName::transpose(c, -capo));
+                cost += shape ? Arranger::difficulty(*shape) : 20.0;
+            }
         if (cost < bestCost) {
             bestCost = cost;
             bestCapo = capo;
@@ -605,7 +633,8 @@ bool detectChords(const AudioClip &clip, DetectedSong *out, QString *error,
     }
     for (auto &b : bars)
         for (QString &c : b)
-            c = transposeName(c, -bestCapo);
+            if (c != QLatin1String("N.C."))
+                c = ChordName::transpose(c, -bestCapo);
 
     double fitSum = 0;
     for (double v : bestFit)

@@ -1,6 +1,7 @@
 #include "ChordSheet.h"
 
 #include "ChordLibrary.h"
+#include "ChordName.h"
 
 #include <QRegularExpression>
 #include <QStringList>
@@ -26,8 +27,13 @@ struct SheetSection
 // True when every token on the line is a chord (optionally with :beats), %, N.C. or a bar line.
 bool isChordLine(const QString &line)
 {
-    const QStringList toks = QString(line).replace(QLatin1Char('|'), QLatin1Char(' '))
-            .split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+    // Arabic chord names look like words ("لا" is also "no"), so a line written only in
+    // Arabic script counts as chords only when it has bar lines.
+    static const QRegularExpression latin(QStringLiteral("[A-Za-z]"));
+    if (!line.contains(QLatin1Char('|')) && !line.contains(latin))
+        return false;
+    const QStringList toks = ChordName::joinTokens(QString(line).replace(QLatin1Char('|'), QLatin1Char(' '))
+            .split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts));
     if (toks.isEmpty())
         return false;
     for (QString t : toks) {

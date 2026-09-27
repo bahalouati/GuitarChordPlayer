@@ -86,3 +86,5 @@ jobs:
         run: |
           find songs -name '*.xml' -print0 | while IFS= read -r -d '' f; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav" || exit 1; done
           ./build/GuitarChordPlayer --detect /tmp/pop_practice.wav /tmp/detected.xml
+      - name: Translations (lists interface text without an Arabic translation)
+        run: python3 scripts/check_translations.py

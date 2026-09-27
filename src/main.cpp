@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "Song.h"
 #include "WavWriter.h"
+#include "ChordName.h"
+#include "Translator.h"
 #include "AudioTrack.h"
 #include "ChordDetector.h"
 
@@ -8,6 +10,7 @@
 
 #include <QApplication>
 #include <QIcon>
+#include <QSettings>
 #include <QTextStream>
 
 int main(int argc, char *argv[])
@@ -68,6 +71,8 @@ int main(int argc, char *argv[])
     QApplication::setApplicationVersion(QStringLiteral(APP_VERSION));
 #endif
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/resources/app.png")));
+    installLanguage(app);
+    ChordName::setNotation(ChordName::Notation(QSettings().value(QStringLiteral("notation"), 0).toInt()));
     MainWindow w;
     w.show();
     if (argc > 1)

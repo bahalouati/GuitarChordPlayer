@@ -118,6 +118,7 @@ SongEditor::SongEditor(QWidget *parent) : QWidget(parent)
     QFont mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     m_edit->setFont(mono);
     m_edit->setLineWrapMode(QPlainTextEdit::NoWrap);
+    m_edit->setLayoutDirection(Qt::LeftToRight); // XML reads left to right even in the Arabic interface
     m_edit->setTabStopDistance(QFontMetricsF(mono).horizontalAdvance(QLatin1Char(' ')) * 2);
     new XmlHighlighter(m_edit->document());
 

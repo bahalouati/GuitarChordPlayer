@@ -22,8 +22,10 @@ struct DetectedSong
 
 // Finds tempo, beats, bar lines and chords in a recording.
 // progress gets 0..1; set *cancel to stop early. Runs on any thread.
+// detailed: also recognise 7, m7, maj7, sus2, sus4, dim and aug (otherwise major/minor only).
 bool detectChords(const AudioClip &clip, DetectedSong *out, QString *error,
-                  const std::function<void(double)> &progress = {}, const std::atomic<bool> *cancel = nullptr);
+                  const std::function<void(double)> &progress = {}, const std::atomic<bool> *cancel = nullptr,
+                  bool detailed = true);
 
 // Writes a song file that plays along with the recording (audioFileName is relative to the song file).
 QString detectedSongToXml(const DetectedSong &song, const QString &title, const QString &artist,

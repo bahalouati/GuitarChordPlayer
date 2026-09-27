@@ -65,7 +65,25 @@ std::shared_ptr<AudioClip> decodeAudioFile(const QString &path, int targetRate, 
             *error = decoder.errorString();
         return nullptr;
     }
+    // Watchdog: if the decoder stops delivering audio without saying it finished, give up
+    // instead of waiting forever (keep what was decoded so far).
+    size_t lastSize = 0;
+    int idleTicks = 0;
+    QTimer watchdog;
+    QObject::connect(&watchdog, &QTimer::timeout, &loop, [&] {
+        if (l.size() != lastSize) {
+            lastSize = l.size();
+            idleTicks = 0;
+        } else if (++idleTicks >= 20) { // 10 seconds without progress
+            if (l.empty())
+                err = QStringLiteral("The decoder stopped responding.");
+            loop.quit();
+        }
+    });
+    watchdog.start(500);
     loop.exec();
+    watchdog.stop();
+    decoder.stop();
 
     if (l.empty() || srcRate <= 0) {
         if (error)

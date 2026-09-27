@@ -13,6 +13,7 @@ class SongEditor;
 class Updater;
 class QDockWidget;
 class QCheckBox;
+class QComboBox;
 class QSpinBox;
 struct AudioClip;
 class QFileSystemWatcher;
@@ -48,6 +49,7 @@ private slots:
     void newSongFromAudio();
     void attachRecording();
     void addLyrics();
+    void rearrange();
     void reloadSong();
     void exportWav();
     void refreshSongList();
@@ -60,6 +62,8 @@ private:
     bool loadSongFileImpl(const QString &path, bool keepPosition);
     void applySong(std::shared_ptr<Song> song, std::shared_ptr<Timeline> tl, bool keepPosition);
     void applyLiveEdit(const QString &path, const QByteArray &xml);
+    void updateInfo();
+    void buildLanguageMenu(QMenu *menu);
     void buildUi();
     void buildMenus();
     QString examplesDir() const;
@@ -80,7 +84,10 @@ private:
 
     AudioEngine *m_engine = nullptr;
     std::shared_ptr<Song> m_song;
-    std::shared_ptr<Timeline> m_timeline;
+    std::shared_ptr<Timeline> m_timeline;          // the song as written in its file
+    std::shared_ptr<const Timeline> m_view;        // re-fingered for the player (capo, simplify, names)
+    QComboBox *m_capoBox = nullptr;
+    QComboBox *m_chordsBox = nullptr;
 
     QListWidget *m_songList = nullptr;
     QLabel *m_banner = nullptr;

@@ -1,5 +1,7 @@
 #include "ChordLibrary.h"
 
+#include "ChordName.h"
+
 #include <QRegularExpression>
 #include <QStringList>
 
@@ -174,6 +176,7 @@ const Template eShapes[] = {
     {"9",    {0, 2, 0, 1, 0, 2},   {1, 3, 1, 2, 1, 4}},
     {"dim",  {0, 1, 2, 0, X, X}, {1, 2, 4, 1, 0, 0}},
     {"aug",  {0, 3, 2, 1, 1, 0},   {1, 4, 3, 2, 2, 1}},
+    {"7sus4", {0, 2, 0, 2, 0, 0},  {1, 3, 1, 4, 1, 1}},
 };
 const Template aShapes[] = {
     {"",     {X, 0, 2, 2, 2, 0},  {0, 1, 3, 3, 3, 1}},
@@ -189,6 +192,9 @@ const Template aShapes[] = {
     {"9",    {X, 0, -1, 0, 0, 0},  {0, 2, 1, 3, 3, 3}},
     {"dim",  {X, 0, 1, 2, 1, X}, {0, 1, 2, 4, 3, 0}},
     {"aug",  {X, 0, 3, 2, 2, 1},  {0, 1, 4, 2, 3, 1}},
+    {"7sus4", {X, 0, 2, 0, 3, 0}, {0, 1, 3, 1, 4, 1}},
+    {"m7b5", {X, 0, 1, 0, 1, X},  {0, 2, 3, 1, 4, 0}},
+    {"dim7", {X, 0, 1, -1, 1, X}, {0, 2, 3, 1, 4, 0}},
 };
 
 std::optional<ChordShape> fromTemplate(const Template *list, int count, const QString &quality, int fret)
@@ -222,6 +228,15 @@ std::optional<ChordShape> lookup(const QString &rawName)
     };
     if (auto c = found(name))
         return c;
+
+    // Solfège / Arabic names ("Lam", "صول 7", "لا م"): look up the English spelling.
+    const QString english = ChordName::normalise(name);
+    if (english != name) {
+        auto c = lookup(english);
+        if (c)
+            c->name = name;
+        return c;
+    }
 
     // Slash chord: try the full name's pieces, keep the displayed name.
     QString main = name;

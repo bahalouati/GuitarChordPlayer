@@ -1,5 +1,7 @@
 #include "Song.h"
 
+#include "ChordName.h"
+
 #include <QFile>
 #include <QDir>
 #include <QFileInfo>
@@ -153,10 +155,11 @@ bool parseBars(const QString &text, QVector<BarDef> *out, QString *error)
     if (text.contains(QLatin1Char('|')))
         barTexts = text.split(QLatin1Char('|'), Qt::SkipEmptyParts);
     else
-        barTexts = text.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+        barTexts = ChordName::joinTokens(text.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts));
 
     for (const QString &bt : barTexts) {
-        const QStringList toks = bt.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+        const QStringList toks = ChordName::joinTokens(
+                bt.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts));
         if (toks.isEmpty())
             continue;
         BarDef bar;

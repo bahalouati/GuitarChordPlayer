@@ -7,6 +7,8 @@
 
 ChordDiagramWidget::ChordDiagramWidget(QWidget *parent) : QWidget(parent)
 {
+    // Diagrams and timelines read left to right in every language.
+    setLayoutDirection(Qt::LeftToRight);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
