@@ -10,6 +10,7 @@
 #include <QJsonObject>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
+#include <QNetworkProxyFactory>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProcess>
@@ -58,6 +59,8 @@ Start-Process -FilePath $Exe
 
 Updater::Updater(QWidget *window) : QObject(window), m_window(window), m_net(new QNetworkAccessManager(this))
 {
+    // Use the system's proxy settings, like a browser would.
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
 }
 
 int Updater::currentBuild()
@@ -84,6 +87,7 @@ void Updater::check(bool interactive)
         m_busy = false;
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (reply->error() != QNetworkReply::NoError || status != 200) {
+            qWarning("Update check failed: %d %s", status, qPrintable(reply->errorString()));
             if (interactive) {
                 QMessageBox::warning(m_window, tr("Check for updates"),
                                      status == 404 ? tr("No releases have been published yet.")

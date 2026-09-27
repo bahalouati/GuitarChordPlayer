@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- النمر المقنع (Tiger Mask) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/LRbye-zpmks
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 3: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="النمر المقنع - Tiger Mask" artist="Spacetoon" bpm="168" beatsPerBar="4" capo="3" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>E | E | E | E</bars>
+      <bars>E | E | G Bb | Am Bb</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Bb Em | Em | E | Am</bars>
+      <bars>Am Dm | Am | Dm F | F</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Am | Dm | Am | E</bars>
+      <bars>E Am | Am | Am | G</bars>
+    </section>
+    <section name="Part 4">
+      <bars>G F | F | E | Fm</bars>
+      <bars>Am | Am | Dm | E</bars>
+    </section>
+    <section name="Part 5">
+      <bars>E Am | Dm | Dm | E</bars>
+      <bars>E | E Am | Am | G</bars>
+    </section>
+    <section name="Part 6">
+      <bars>G E | E Am | Am | Am</bars>
+      <bars>Bb Am | C | Em | Em</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Em F | F | E | Am</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Am</bars>
+    </section>
+  </sections>
+</song>

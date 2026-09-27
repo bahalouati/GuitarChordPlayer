@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- شوت (Shoot!) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/BicsIpASXCc
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 4: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="شوت - Shoot!" artist="Spacetoon" bpm="124" beatsPerBar="4" capo="4" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>A | A | Bb | G</bars>
+      <bars>E | E | Am | Dm</bars>
+    </section>
+    <section name="Part 2">
+      <bars>E | E | E | A</bars>
+      <bars>A Am | Am | Am | Am</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Am | Am | Am | E</bars>
+      <bars>E Am | Am | E | E</bars>
+    </section>
+    <section name="Part 4">
+      <bars>E | Am | Am | Am</bars>
+      <bars>Am | Am | Am | Am</bars>
+    </section>
+    <section name="Part 5">
+      <bars>Am | A | Bb | C</bars>
+      <bars>Em | A | Bb | C</bars>
+    </section>
+    <section name="Part 6">
+      <bars>Em | Am</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Am</bars>
+    </section>
+  </sections>
+</song>

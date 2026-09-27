@@ -277,10 +277,15 @@ finger would.
 - *Amazing Grace* (traditional): 3/4 waltz strum and picking, with lyrics
 - *Pop Practice Song*: five sections with different strums, sixteenths, accents, chucks and tempo changes
 - *Travis Picking Study*: alternating-bass fingerpicking
-- **Spacetoon** (`songs/spacetoon/`): Remi, Hunter x Hunter, Ahd Al Asdiqaa, Hazim Al Raad, Ana wa Akhi, Sabiq wa
-  Lahiq, Digimon, Treasure Island, Nawar, Asrar Al Muhit and Omi Kam Ahwaha. The chords come from the charts on
-  Guitarabia and Ultimate Guitar. Bar lengths and tempos are approximate, and there are no lyrics (add your own
-  with *Insert → Lyric line*).
+- **Spacetoon** (`songs/spacetoon/`): 51 songs from the Spacetoon opening themes playlist.
+  - 11 are arranged from human-written chord charts on Guitarabia and Ultimate Guitar (Remi, Hunter x Hunter,
+    Ahd Al Asdiqaa, Hazim Al Raad, Ana wa Akhi, Sabiq wa Lahiq, Digimon, Treasure Island, Nawar, Asrar Al Muhit,
+    Omi Kam Ahwaha). The chords are reliable, but bar lengths and tempos are estimates.
+  - 40 were generated from the chords that [ChordU](https://chordu.com) detected automatically in the YouTube recordings
+    (Captain Majid, Grendizer, Slam Dunk, Shoot!, Mowgli, Babar, Tiger Mask, ...). They follow the recording's form
+    and tempo, use major/minor chords only, and a capo where it makes the shapes easier. Some chords will be off; fix
+    them by ear with the live editor. Each file names the video it came from.
+  - None of them include lyrics (they are copyrighted). Add your own with *Insert → Lyric line*.
 
 ## Code layout
 

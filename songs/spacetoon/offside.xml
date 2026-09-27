@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أوف سايد (Offside) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/ZEW5BHx6urU
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 1: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أوف سايد - Offside" artist="Spacetoon" bpm="154" beatsPerBar="4" capo="1" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>Bb Am | G F | A | A</bars>
+      <bars>Bb | C | Am | Dm</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Bb | C | Am | Dm</bars>
+      <bars>Bb | C | Am | Dm</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Bb | C | D | D</bars>
+      <bars>Bb | Bb | Am | Am</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Bb | B Em | A | A</bars>
+      <bars>Bb | C | Am | Dm</bars>
+    </section>
+    <section name="Part 5">
+      <bars>Bb | C | Am | Cm F</bars>
+      <bars>Bb | C | Am | Dm</bars>
+    </section>
+    <section name="Part 6">
+      <bars>Bb | Am | Bb | Am</bars>
+      <bars>Bb | C | G D | D</bars>
+    </section>
+    <section name="Part 7">
+      <bars>D</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>D</bars>
+    </section>
+  </sections>
+</song>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- دروبي (Do Re Bi) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/Fc0LTrUSxKE
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="دروبي - Do Re Bi" artist="Spacetoon" bpm="147" beatsPerBar="3" pattern="waltz">
+  <sections>
+    <section name="Part 1">
+      <bars>Am | Am | G | F</bars>
+      <bars>G | G | Dm | Em</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Em | Em | F | G</bars>
+      <bars>G | C | C | F</bars>
+    </section>
+    <section name="Part 3">
+      <bars>G | C | F | E</bars>
+      <bars>G | C | C | C</bars>
+    </section>
+    <section name="Part 4">
+      <bars>C | C | C | C</bars>
+      <bars>C | Em | Am | C</bars>
+    </section>
+    <section name="Part 5">
+      <bars>F | Em | Dm | G</bars>
+      <bars>C | C | Am | C</bars>
+    </section>
+    <section name="Part 6">
+      <bars>F | Em | C | C</bars>
+      <bars>C | C | C | F</bars>
+    </section>
+    <section name="Part 7">
+      <bars>F | Bm | Bm | Em</bars>
+      <bars>Em | Am | Am | Dm</bars>
+    </section>
+    <section name="Part 8">
+      <bars>Dm | G | G | C</bars>
+      <bars>C | C | C | F</bars>
+    </section>
+    <section name="Part 9">
+      <bars>F | G | G | Em</bars>
+      <bars>Em | Am | Am | Am</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Am</bars>
+    </section>
+  </sections>
+</song>

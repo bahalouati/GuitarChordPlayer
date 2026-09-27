@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أمي ضمي يدي (Ommi Dummi Yadi) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/Y_lzmNH-Wh8
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 1: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أمي ضمي يدي - Ommi Dummi Yadi" artist="Spacetoon" bpm="150" beatsPerBar="3" capo="1" pattern="waltz">
+  <sections>
+    <section name="Part 1">
+      <bars>E | E | E | Em</bars>
+      <bars>Em | Em | Em | Em</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Em | A | B | Em</bars>
+      <bars>Em | Am | Am | E</bars>
+    </section>
+    <section name="Part 3">
+      <bars>E | Am | Am | E</bars>
+      <bars>E | Am | Am | Em</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Em | Am | Am | Em</bars>
+      <bars>Em | Am | Am | Em</bars>
+    </section>
+    <section name="Part 5">
+      <bars>A | A | Bm | Bm</bars>
+      <bars>A | A | Bm | Bm</bars>
+    </section>
+    <section name="Part 6">
+      <bars>A | A | Bm | Bm</bars>
+      <bars>A | A | Bm | Em</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Em | Am | Am | Em</bars>
+      <bars>Em | Am | Am | Em</bars>
+    </section>
+    <section name="Part 8">
+      <bars>Em | Am | Am | Em</bars>
+      <bars>Em | Am | Am | Em</bars>
+    </section>
+    <section name="Part 9">
+      <bars>Am | Am | Bm | Bm</bars>
+      <bars>A | A | Bm | E</bars>
+    </section>
+    <section name="Part 10">
+      <bars>A | A | Bm | Bm</bars>
+      <bars>A | A | Bm | Em</bars>
+    </section>
+    <section name="Part 11">
+      <bars>Em | Am | Am | Em</bars>
+      <bars>Em | Am | Am | Em</bars>
+    </section>
+    <section name="Part 12">
+      <bars>Em | Am | Am | Em</bars>
+      <bars>Em | Am | Am | Em</bars>
+    </section>
+    <section name="Part 13">
+      <bars>Em | Am | Am | Em</bars>
+      <bars>Em | Am | Am | Em</bars>
+    </section>
+    <section name="Part 14">
+      <bars>Em | Am | Am | Em</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>Em</bars>
+    </section>
+  </sections>
+</song>

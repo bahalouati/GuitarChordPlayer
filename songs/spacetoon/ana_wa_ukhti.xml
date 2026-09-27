@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أنا وأختي (Ana wa Ukhti) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/dB95J8Pa49c
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أنا وأختي - Ana wa Ukhti" artist="Spacetoon" bpm="80" beatsPerBar="4" pattern="ballad">
+  <sections>
+    <section name="Part 1">
+      <bars>G | G | Em | B</bars>
+      <bars>Em | B | Em | B</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Em | Em B | B | Em B</bars>
+      <bars>B | A Am | G B | B</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Em | Am F | Dm E | Am F</bars>
+      <bars>B E | Am F | Dm E | Am F</bars>
+    </section>
+    <section name="Part 4">
+      <bars>B E | E F | Dm | C</bars>
+      <bars>B | Am | E | Am</bars>
+    </section>
+    <section name="Part 5">
+      <bars>E | Am | E | Am E</bars>
+      <bars>E | Am | Am | G</bars>
+    </section>
+    <section name="Part 6">
+      <bars>B | B | Em G | E</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>E</bars>
+    </section>
+  </sections>
+</song>

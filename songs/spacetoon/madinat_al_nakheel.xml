@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- مدينة النخيل (Madinat Al Nakheel) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/WPeArLLXwZg
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 4: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="مدينة النخيل - Madinat Al Nakheel" artist="Spacetoon" bpm="141" beatsPerBar="4" capo="4" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>A | A | A | A D</bars>
+      <bars>D | D | D | D B</bars>
+    </section>
+    <section name="Part 2">
+      <bars>D | D | D | D B</bars>
+      <bars>D | A | D | D G</bars>
+    </section>
+    <section name="Part 3">
+      <bars>G | G | G A | A</bars>
+      <bars>D | D | D | A</bars>
+    </section>
+    <section name="Part 4">
+      <bars>A D | D | A C | A D</bars>
+      <bars>A | A Em | D | D</bars>
+    </section>
+    <section name="Part 5">
+      <bars>D | D | D | D</bars>
+      <bars>D | D G | D | D E</bars>
+    </section>
+    <section name="Part 6">
+      <bars>D | D E | E | E B</bars>
+      <bars>B | B A | G | Em</bars>
+    </section>
+    <section name="Part 7">
+      <bars>Em A | A | A | A</bars>
+      <bars>A | A D | D | D</bars>
+    </section>
+    <section name="Part 8">
+      <bars>D | D | D | D Em</bars>
+      <bars>D | D | D | D</bars>
+    </section>
+    <section name="Part 9">
+      <bars>D | D | D | D A</bars>
+      <bars>A | A | D | G E</bars>
+    </section>
+    <section name="Part 10">
+      <bars>D</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>D</bars>
+    </section>
+  </sections>
+</song>

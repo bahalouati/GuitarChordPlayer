@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- القط الأسود (The Black Cat) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/P0hzk7xI1b4
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 2: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="القط الأسود - The Black Cat" artist="Spacetoon" bpm="90" beatsPerBar="4" capo="2" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>G | G | C G | G</bars>
+      <bars>C Em | C D | C D | G</bars>
+    </section>
+    <section name="Part 2">
+      <bars>C D | G | C D | C D</bars>
+      <bars>C D | G | C D | D Bm</bars>
+    </section>
+    <section name="Part 3">
+      <bars>C D | G Bm | C D | C D</bars>
+      <bars>C D | Bb | C | C#</bars>
+    </section>
+    <section name="Part 4">
+      <bars>D | C D | C D | G</bars>
+      <bars>C D | G</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>G</bars>
+    </section>
+  </sections>
+</song>

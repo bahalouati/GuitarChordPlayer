@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- الكابتن ماجد (Captain Majid (Part 1)) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/l0ibozG6mL0
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 4: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="الكابتن ماجد - Captain Majid (Part 1)" artist="Spacetoon" bpm="120" beatsPerBar="4" capo="4" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>Am F | Am | Am | Am</bars>
+      <bars>Dm | E | Am | Am</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Dm | Dm Am | E | Am</bars>
+      <bars>Dm | Dm Am | Am | Am</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Dm | Dm Am | Dm G | G</bars>
+      <bars>E Am | Am E | Am | E</bars>
+    </section>
+    <section name="Part 4">
+      <bars>Dm | Am | Am | Dm</bars>
+      <bars>Dm Am | Am | Am E | Am</bars>
+    </section>
+    <section name="Part 5">
+      <bars>Dm | E | Dm E | E</bars>
+      <bars>E A</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>A</bars>
+    </section>
+  </sections>
+</song>

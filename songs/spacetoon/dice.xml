@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- دايس (D.I.C.E) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/Ikp-l74WyKA
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 5: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="دايس - D.I.C.E" artist="Spacetoon" bpm="100" beatsPerBar="4" capo="5" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>G | G F | F | G</bars>
+      <bars>C | C | C | C</bars>
+    </section>
+    <section name="Part 2">
+      <bars>C Am | D Fm | Fm Am | D C</bars>
+      <bars>G Am | Am | Am | D F</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Bm | D Am | D Am | D</bars>
+      <bars>Am | D Am | D Am | D</bars>
+    </section>
+    <section name="Part 4">
+      <bars>D C | Dm Am | F C | Dm Am</bars>
+      <bars>F C | Dm Am | F C | Dm</bars>
+    </section>
+    <section name="Part 5">
+      <bars>F C | G Am | E F | G C</bars>
+      <bars>C | Dm Am | F C | Dm Am</bars>
+    </section>
+    <section name="Part 6">
+      <bars>F C | Dm Am | Am C | Dm</bars>
+      <bars>F C | G Am | Bm F | D C</bars>
+    </section>
+    <section name="Part 7">
+      <bars>C | C | Eb | B</bars>
+      <bars>B E | E B | B | Bbm Eb</bars>
+    </section>
+    <section name="Part 8">
+      <bars>Eb G#m | G#m | G#m</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>G#m</bars>
+    </section>
+  </sections>
+</song>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أبطال الكرة ٢ (Abtal Al Kora (Part 2)) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/9jyAdYsPgjU
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أبطال الكرة ٢ - Abtal Al Kora (Part 2)" artist="Spacetoon" bpm="120" beatsPerBar="4" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>Em | Em | Em D | G</bars>
+      <bars>C D | G | D | G A</bars>
+    </section>
+    <section name="Part 2">
+      <bars>D | G A | A D | G A</bars>
+      <bars>A D | G C# | C# G | G A</bars>
+    </section>
+    <section name="Part 3">
+      <bars>A | G | G A | D</bars>
+      <bars>G | A D | G C# | C# D</bars>
+    </section>
+    <section name="Part 4">
+      <bars>G | A D | G A | D</bars>
+      <bars>G A | D | G A | D</bars>
+    </section>
+    <section name="Part 5">
+      <bars>G A | D G | G A | A Em</bars>
+      <bars>Em D | G A | D | G A</bars>
+    </section>
+    <section name="Part 6">
+      <bars>D | G A | D | G A</bars>
+      <bars>D | G A | D | G A</bars>
+    </section>
+    <section name="Part 7">
+      <bars>D | G A | D | G A</bars>
+      <bars>D | G A | D | G</bars>
+    </section>
+    <section name="Part 8">
+      <bars>G | G | G | G</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>G</bars>
+    </section>
+  </sections>
+</song>

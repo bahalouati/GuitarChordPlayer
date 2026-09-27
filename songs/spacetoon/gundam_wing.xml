@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- أجنحة الكاندام (Gundam Wing) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/_bIqva4VNt0
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 5: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="أجنحة الكاندام - Gundam Wing" artist="Spacetoon" bpm="140" beatsPerBar="4" capo="5" pattern="drive">
+  <sections>
+    <section name="Part 1">
+      <bars>D E | E | E Em | Em</bars>
+      <bars>Em | Em | Em | C</bars>
+    </section>
+    <section name="Part 2">
+      <bars>D | Em C | Em | Em</bars>
+      <bars>Em | Em C | Em | Em G</bars>
+    </section>
+    <section name="Part 3">
+      <bars>G | Em C | Em | Em C</bars>
+      <bars>G Em | Em C | Em | E</bars>
+    </section>
+    <section name="Part 4">
+      <bars>G | Em | Em | Em</bars>
+      <bars>Em | Em | Em | Em C</bars>
+    </section>
+    <section name="Part 5">
+      <bars>D | E | C | D</bars>
+      <bars>E | C | D | B</bars>
+    </section>
+    <section name="Part 6">
+      <bars>B | C | D | Em</bars>
+      <bars>Em | Em | Em | E</bars>
+    </section>
+    <section name="Part 7">
+      <bars>E G | G</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>G</bars>
+    </section>
+  </sections>
+</song>

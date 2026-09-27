@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- دوري يا أرضنا (Dawri Ya Ardana (Digimon)) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/5JQxmqT65Bs
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="دوري يا أرضنا - Dawri Ya Ardana (Digimon)" artist="Spacetoon" bpm="72" beatsPerBar="4" pattern="ballad">
+  <sections>
+    <section name="Part 1">
+      <bars>Bb | Bb G | G F | F</bars>
+      <bars>F | C | C | D C</bars>
+    </section>
+    <section name="Part 2">
+      <bars>C Bm | Em D | C Bm | Am D</bars>
+      <bars>B | D C | Bm Am | Bm E</bars>
+    </section>
+    <section name="Part 3">
+      <bars>E C | C | Bm | Em</bars>
+      <bars>Am Bm | C D | C | Bm</bars>
+    </section>
+    <section name="Part 4">
+      <bars>C | Bm C | C Bm | Am</bars>
+      <bars>Bm C | Bm Em | Em | G# C#m</bars>
+    </section>
+    <section name="Part 5">
+      <bars>C#m A | E | G# | C#</bars>
+      <bars>C#</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>C#</bars>
+    </section>
+  </sections>
+</song>

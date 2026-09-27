@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- حكايات ما أحلاها (Hikayat Ma Ahlaha) - Spacetoon.
+     Chords detected automatically by ChordU from the recording https://youtu.be/Fh9FOlI0Byw
+     (simplified to major/minor), so some chords may be off - fix them by ear in the editor (Ctrl+E, Live).
+     Capo 1: easier shapes, same sound as the recording.
+     Chords only; add the lyrics yourself with Insert > Lyric line. -->
+<song title="حكايات ما أحلاها - Hikayat Ma Ahlaha" artist="Spacetoon" bpm="103" beatsPerBar="4" capo="1" pattern="folk">
+  <sections>
+    <section name="Part 1">
+      <bars>G# | G# | G# | G#</bars>
+      <bars>G# Em | Em | Em D | D</bars>
+    </section>
+    <section name="Part 2">
+      <bars>Em | Em | Em D | D</bars>
+      <bars>Em | A Bm | Em | Am D</bars>
+    </section>
+    <section name="Part 3">
+      <bars>Em | Em D | Em | Am Bm</bars>
+      <bars>Bm | D Bm | Bm Em | Em D</bars>
+    </section>
+    <section name="Part 4">
+      <bars>D Em | G Bm | Bm Em | G</bars>
+      <bars>D Em | G | E D | D</bars>
+    </section>
+    <section name="Part 5">
+      <bars>D G | G D | D Em | Em Bm</bars>
+      <bars>Dm | E G# | G# G | G D</bars>
+    </section>
+    <section name="Part 6">
+      <bars>D | Em | Bm | Em</bars>
+      <bars>E G | G Em | Am Em | Bm Am</bars>
+    </section>
+    <section name="Part 7">
+      <bars>G | C Em | Am Em | Bm E</bars>
+      <bars>Em D | Em | Em | Em D</bars>
+    </section>
+    <section name="Part 8">
+      <bars>D | Em | Em | Em</bars>
+      <bars>D | G Em | Em | G#m C#m</bars>
+    </section>
+    <section name="Part 9">
+      <bars>B | A | C G# | Bb</bars>
+      <bars>F# B | A</bars>
+    </section>
+    <section name="Ending" pattern="whole">
+      <bars>A</bars>
+    </section>
+  </sections>
+</song>
