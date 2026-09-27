@@ -17,6 +17,8 @@ qt_add_executable(GuitarChordPlayer WIN32
     src/WavWriter.h src/WavWriter.cpp
     src/AudioTrack.h src/AudioTrack.cpp
     src/ChordDetector.h src/ChordDetector.cpp
+    src/LyricsAligner.h src/LyricsAligner.cpp
+    src/LyricsDialog.h src/LyricsDialog.cpp
     src/ChordDiagramWidget.h src/ChordDiagramWidget.cpp
     src/PatternWidget.h src/PatternWidget.cpp
     src/LyricsWidget.h src/LyricsWidget.cpp

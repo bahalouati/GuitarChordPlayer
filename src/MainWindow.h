@@ -47,6 +47,7 @@ private slots:
     void showChordFinder();
     void newSongFromAudio();
     void attachRecording();
+    void addLyrics();
     void reloadSong();
     void exportWav();
     void refreshSongList();

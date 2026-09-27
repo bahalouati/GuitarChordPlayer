@@ -6,6 +6,7 @@
 #include "ChordFinderDialog.h"
 #include "NewSongDialog.h"
 #include "LlmPrompt.h"
+#include "LyricsDialog.h"
 #include "LyricsWidget.h"
 #include "PatternWidget.h"
 #include "SongEditor.h"
@@ -39,6 +40,7 @@
 #include <QSignalBlocker>
 #include <QInputDialog>
 #include <QProgressDialog>
+#include <QSaveFile>
 #include <QSettings>
 #include <QSpinBox>
 #include <QThread>
@@ -415,6 +417,8 @@ void MainWindow::buildMenus()
 
     QMenu *tools = menuBar()->addMenu(tr("&Tools"));
     tools->addAction(tr("&Chord finder..."), QKeySequence(Qt::CTRL | Qt::Key_K), this, &MainWindow::showChordFinder);
+    tools->addAction(tr("Add &lyrics to this song..."), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_L), this,
+                     &MainWindow::addLyrics);
 
     QMenu *help = menuBar()->addMenu(tr("&Help"));
     help->addAction(tr("Song XML format..."), this, &MainWindow::showFormatHelp);
@@ -1190,4 +1194,48 @@ void MainWindow::attachRecording()
     refreshSongList();
     loadSongFile(songPath);
     m_status->setText(tr("Recording attached. If the guitar and the recording drift apart, nudge Sync until they line up."));
+}
+
+void MainWindow::addLyrics()
+{
+    if (!m_song || !m_timeline) {
+        QMessageBox::information(this, tr("Add lyrics"), tr("Open a song first."));
+        return;
+    }
+    if (m_editor->isModified() && m_editor->filePath() == m_song->filePath) {
+        QMessageBox::information(this, tr("Add lyrics"),
+                                 tr("The song has unsaved changes in the editor. Save them (Ctrl+S) or revert them first."));
+        return;
+    }
+    LyricsDialog dlg(m_timeline, this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    // Songs outside My Songs (the examples) get a copy, so updates never overwrite your lyrics.
+    const bool inMySongs = QFileInfo(m_song->filePath).absolutePath().startsWith(QDir(userSongsDir()).absolutePath());
+    const QString target = inMySongs ? m_song->filePath : uniqueSongPath(m_song->title);
+    const QString audio = m_song->audioFile.isEmpty()
+            ? QString() : QFileInfo(target).absoluteDir().relativeFilePath(m_song->audioFile);
+    const QString xml = LyricsAligner::songXmlWithLyrics(*m_song, *m_timeline, dlg.placements(), audio);
+
+    QString err;
+    auto check = loadSongFromData(xml.toUtf8(), target, &err);
+    if (!check || !buildTimeline(check, &err)) {
+        QMessageBox::warning(this, tr("Add lyrics"), tr("Could not build the song with lyrics:\n%1").arg(err));
+        return;
+    }
+    if (inMySongs) {
+        // Keep the previous version, just in case.
+        QFile::remove(target + QStringLiteral(".bak"));
+        QFile::copy(target, target + QStringLiteral(".bak"));
+    }
+    QSaveFile f(target);
+    if (!f.open(QIODevice::WriteOnly) || f.write(xml.toUtf8()) < 0 || !f.commit()) {
+        QMessageBox::warning(this, tr("Add lyrics"), tr("Could not save %1").arg(target));
+        return;
+    }
+    refreshSongList();
+    loadSongFile(target, target == m_song->filePath);
+    m_status->setText(inMySongs ? tr("Lyrics added (the previous version is kept as %1.bak)").arg(QFileInfo(target).fileName())
+                                : tr("Lyrics added to a copy in My Songs: %1").arg(QFileInfo(target).fileName()));
 }

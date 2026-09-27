@@ -68,6 +68,15 @@ double LyricsWidget::drawLine(QPainter &p, const QRectF &r, int line, int highli
     const QColor chordColor = dim ? fg : QColor(40, 120, 220);
     const QColor hot(255, 140, 40);
 
+    // Arabic, Hebrew, Persian...: lay the line out from the right.
+    bool rtl = false;
+    for (const Item &it : items)
+        if (!it.text.isEmpty()) {
+            rtl = it.text.isRightToLeft();
+            break;
+        }
+    const Qt::Alignment hAlign = rtl ? Qt::AlignRight : Qt::AlignLeft;
+
     if (!l.split) {
         // One lyric for the whole line: chords spread above it, progress underline below.
         QString chordsRow;
@@ -78,30 +87,36 @@ double LyricsWidget::drawLine(QPainter &p, const QRectF &r, int line, int highli
             return rowH + 6;
         p.setFont(chordFont);
         p.setPen(chordColor);
-        p.drawText(QRectF(r.left(), r.top(), r.width(), cm.height()), Qt::AlignLeft | Qt::AlignVCenter,
+        p.drawText(QRectF(r.left(), r.top(), r.width(), cm.height()), hAlign | Qt::AlignVCenter,
                    cm.elidedText(chordsRow.trimmed(), Qt::ElideRight, r.width()));
         p.setFont(textFont);
         p.setPen(highlightBar >= 0 ? hot : fg);
         const QRectF tr(r.left(), r.top() + cm.height() + 2, r.width(), tm.height());
-        p.drawText(tr, Qt::AlignLeft | Qt::AlignVCenter, tm.elidedText(text, Qt::ElideRight, r.width()));
+        p.drawText(tr, hAlign | Qt::AlignVCenter, tm.elidedText(text, Qt::ElideRight, r.width()));
         if (highlightBar >= 0 && l.barCount > 0) {
             const double prog = std::clamp((highlightBar - l.firstBar + fraction) / l.barCount, 0.0, 1.0);
             const double w = std::min(r.width(), tm.horizontalAdvance(text));
             p.setPen(QPen(hot, 3, Qt::SolidLine, Qt::RoundCap));
-            p.drawLine(QPointF(r.left(), tr.bottom() + 3), QPointF(r.left() + w * prog, tr.bottom() + 3));
+            if (rtl)
+                p.drawLine(QPointF(r.right(), tr.bottom() + 3), QPointF(r.right() - w * prog, tr.bottom() + 3));
+            else
+                p.drawLine(QPointF(r.left(), tr.bottom() + 3), QPointF(r.left() + w * prog, tr.bottom() + 3));
         }
         return rowH + 6;
     }
 
     // Lyrics split per bar: lay the pieces out like a chord sheet, wrapping when needed.
-    double x = r.left(), y = r.top();
+    // For right-to-left scripts the first bar is on the right and the line flows leftwards.
+    double x = 0, y = r.top(); // x = distance from the starting edge
     for (const Item &it : items) {
         const double w = std::max(bm.horizontalAdvance(it.text), cm.horizontalAdvance(it.chord)) + gap;
-        if (x > r.left() && x + w > r.right()) {
-            x = r.left();
+        if (x > 0 && x + w > r.width()) {
+            x = 0;
             y += rowH;
         }
         if (!measureOnly) {
+            const double cellW = w - gap;
+            const double left = rtl ? r.right() - x - cellW : r.left() + x;
             const bool current = it.bar == highlightBar;
             const bool past = highlightBar >= 0 && it.bar < highlightBar;
             if (current) {
@@ -109,11 +124,11 @@ double LyricsWidget::drawLine(QPainter &p, const QRectF &r, int line, int highli
                 bg.setAlphaF(0.18);
                 p.setPen(Qt::NoPen);
                 p.setBrush(bg);
-                p.drawRoundedRect(QRectF(x - 3, y, w - gap + 6, rowH - 2), 4, 4);
+                p.drawRoundedRect(QRectF(left - 3, y, cellW + 6, rowH - 2), 4, 4);
             }
             p.setFont(chordFont);
             p.setPen(chordColor);
-            p.drawText(QPointF(x, y + cm.ascent()), it.chord);
+            p.drawText(QRectF(left, y, cellW, cm.height()), hAlign | Qt::AlignVCenter, it.chord);
             QFont f = textFont;
             f.setBold(current);
             p.setFont(f);
@@ -121,7 +136,7 @@ double LyricsWidget::drawLine(QPainter &p, const QRectF &r, int line, int highli
             if (past)
                 c.setAlphaF(0.5);
             p.setPen(c);
-            p.drawText(QPointF(x, y + cm.height() + 2 + tm.ascent()), it.text);
+            p.drawText(QRectF(left, y + cm.height() + 2, cellW, tm.height()), hAlign | Qt::AlignVCenter, it.text);
         }
         x += w;
     }

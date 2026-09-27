@@ -132,6 +132,7 @@ add `<chord name="..." frets="x32010"/>` to the song.
 | Ctrl+K | Chord finder |
 | Ctrl+Shift+V | New song from an LLM answer on the clipboard |
 | Ctrl+I | New song from an MP3 (detect chords) |
+| Ctrl+Shift+L | Add lyrics to the current song |
 
 ## Building on Windows (MSVC)
 
@@ -268,6 +269,17 @@ section only.
 - `%` repeats the previous chord. `N.C.` means no chord (strums are silent, picks are skipped).
 - `repeat="2"` on `<bars>` repeats those bars. `<bar>C G</bar>` adds exactly one bar.
 
+### Adding lyrics to an existing song
+
+*Tools → Add lyrics to this song (Ctrl+Shift+L)*: paste the words, one sung line per line, with an empty line between
+verses. The app spreads them over the song's bars. It skips an intro and guesses how many bars each line lasts, and a
+live preview shows which chords each line gets. Change *Singing starts at bar*, *Bars per lyric line* and the pause
+between verses until it fits, then play the song and fix single lines in the editor. The Spacetoon and other example
+songs get a copy in My Songs, so updates never overwrite your lyrics. For songs already in My Songs, the previous
+version is kept as `.bak`. Arabic (and other right-to-left) lyrics are shown right to left.
+
+The included songs have no lyrics because the words are copyrighted. Paste in lyrics you have yourself.
+
 ### Lyrics: `<line>`
 
 Use `<line>` instead of `<bars>` for bars that have words:
@@ -317,7 +329,7 @@ finger would.
     (Captain Majid, Grendizer, Slam Dunk, Shoot!, Mowgli, Babar, Tiger Mask, ...). They follow the recording's form
     and tempo, use major/minor chords only, and a capo where it makes the shapes easier. Some chords will be off; fix
     them by ear with the live editor. Each file names the video it came from.
-  - None of them include lyrics (they are copyrighted). Add your own with *Insert → Lyric line*.
+  - None of them include lyrics (they are copyrighted). Paste your own with *Tools → Add lyrics to this song*.
 
 ## Code layout
 
@@ -326,7 +338,8 @@ finger would.
 | `src/Song.*` | XML parsing, validation, built-in patterns, flattening into a playable `Timeline` |
 | `src/ChordSheet.*` | Plain-text chord sheet → song XML (New Song dialog) |
 | `src/NewSongDialog.*`, `src/SongEditor.*`, `src/ChordFinderDialog.*` | Song creation and editing tools |
-| `src/LyricsWidget.*` | Lyrics view |
+| `src/LyricsWidget.*` | Lyrics view (left-to-right and right-to-left) |
+| `src/LyricsAligner.*`, `src/LyricsDialog.*` | Spreading pasted lyrics over a song's bars |
 | `src/Updater.*` | Checks GitHub releases and installs updates |
 | `src/AudioTrack.*` | Decoding recordings (Qt Multimedia) and WSOLA time stretching |
 | `src/ChordDetector.*` | Beat tracking, chroma and chord recognition for *New song from MP3* |
