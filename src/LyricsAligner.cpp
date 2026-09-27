@@ -177,9 +177,22 @@ QString songXmlWithLyrics(const Song &song, const Timeline &tl, const QVector<Pl
     w.writeAttribute(QStringLiteral("pattern"), song.defaultPattern);
 
     if (!song.audioFile.isEmpty()) {
-        w.writeEmptyElement(QStringLiteral("audio"));
+        if (song.audioBeats.size() < 2) {
+            w.writeEmptyElement(QStringLiteral("audio"));
+        } else {
+            w.writeStartElement(QStringLiteral("audio"));
+        }
         w.writeAttribute(QStringLiteral("file"), audioFile);
         w.writeAttribute(QStringLiteral("offset"), QString::number(song.audioOffset, 'f', 3));
+        if (song.audioBeats.size() >= 2) {
+            QString text;
+            for (int i = 0; i < song.audioBeats.size(); ++i) {
+                text += QString::number(song.audioBeats[i], 'f', 3);
+                text += (i + 1) % qMax(1, song.beatsPerBar) == 0 ? QStringLiteral("\n") : QStringLiteral(" ");
+            }
+            w.writeTextElement(QStringLiteral("beats"), QStringLiteral("\n") + text.trimmed() + QStringLiteral("\n"));
+            w.writeEndElement();
+        }
     }
     if (!song.chords.isEmpty()) {
         w.writeStartElement(QStringLiteral("chords"));

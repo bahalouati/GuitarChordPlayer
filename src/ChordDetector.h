@@ -14,6 +14,7 @@ struct DetectedSong
     double bpm = 120.0;
     int beatsPerBar = 4;
     double offset = 0.0;          // seconds into the recording where bar 1 starts
+    QVector<double> beats;        // when the tempo moves: time of every beat from bar 1 on (else empty)
     int capo = 0;                 // suggested capo; chords below are the shapes to play
     QString key;                  // e.g. "Am" (sounding key)
     QVector<QStringList> bars;    // one or two chords per bar ("N.C." = no chord)

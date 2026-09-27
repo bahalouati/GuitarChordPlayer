@@ -90,5 +90,7 @@ jobs:
           find songs -name '*.xml' -print0 | while IFS= read -r -d '' f; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav" || exit 1; done
           ./build/GuitarChordPlayer --detect /tmp/pop_practice.wav /tmp/detected.xml
           ./build/GuitarChordPlayer --decode "tests/data/tone with cover (1).mp3"
+      - name: Chord detection accuracy (sung test song with drums and a drifting tempo)
+        run: python3 scripts/check_detection.py ./build/GuitarChordPlayer
       - name: Translations (lists interface text without an Arabic translation)
         run: python3 scripts/check_translations.py
