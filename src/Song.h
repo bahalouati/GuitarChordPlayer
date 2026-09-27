@@ -70,6 +70,9 @@ struct Song
     int beatsPerBar = 4;
     int capo = 0;
     QString defaultPattern = QStringLiteral("folk"); // used by sections without a pattern
+    // Optional recording to play along with: <audio file="song.mp3" offset="0.35"/>
+    QString audioFile;      // absolute path (resolved against the song file's folder)
+    double audioOffset = 0; // seconds into the recording where bar 1 starts
     std::array<int, 6> tuning{40, 45, 50, 55, 59, 64}; // MIDI notes, low E first
 
     QVector<ChordShape> chords;       // chords defined in the file (override built-ins)

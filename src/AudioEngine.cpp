@@ -24,33 +24,36 @@ qint64 SynthDevice::readData(char *data, qint64 maxlen)
     const int frames = int(maxlen / bpf);
     if (frames <= 0)
         return 0;
-    if (m_scratch.size() < size_t(frames))
-        m_scratch.resize(size_t(frames));
+    if (m_left.size() < size_t(frames)) {
+        m_left.resize(size_t(frames));
+        m_right.resize(size_t(frames));
+    }
 
     {
         QMutexLocker lock(m_mutex);
-        m_seq->render(m_scratch.data(), frames);
+        m_seq->render(m_left.data(), m_right.data(), frames);
     }
 
     const int bps = m_fmt.bytesPerSample();
     std::memset(data, 0, size_t(frames) * size_t(bpf));
     for (int f = 0; f < frames; ++f) {
-        const float v = std::clamp(m_scratch[size_t(f)], -1.f, 1.f);
-        // Same signal on the first two channels (left/right), silence elsewhere.
+        const float lr[2] = {std::clamp(m_left[size_t(f)], -1.f, 1.f), std::clamp(m_right[size_t(f)], -1.f, 1.f)};
         for (int c = 0; c < std::min(channels, 2); ++c) {
+            // Mono devices get the average of both sides.
+            const float v = channels == 1 ? 0.5f * (lr[0] + lr[1]) : lr[c];
             char *dst = data + f * bpf + c * bps;
             switch (m_fmt.sampleFormat()) {
             case QAudioFormat::Float:
                 std::memcpy(dst, &v, sizeof(float));
                 break;
             case QAudioFormat::Int32: {
-                const qint32 s = qint32(v * 2147483000.f);
-                std::memcpy(dst, &s, sizeof(s));
+                const qint32 smp = qint32(v * 2147483000.f);
+                std::memcpy(dst, &smp, sizeof(smp));
                 break;
             }
             case QAudioFormat::Int16: {
-                const qint16 s = qint16(v * 32767.f);
-                std::memcpy(dst, &s, sizeof(s));
+                const qint16 smp = qint16(v * 32767.f);
+                std::memcpy(dst, &smp, sizeof(smp));
                 break;
             }
             case QAudioFormat::UInt8:
@@ -183,6 +186,41 @@ void AudioEngine::setVolume(float v)
 {
     QMutexLocker l(&m_mutex);
     m_seq.setVolume(v);
+}
+
+int AudioEngine::sampleRate() const
+{
+    return m_format.sampleRate() > 0 ? m_format.sampleRate() : 48000;
+}
+
+void AudioEngine::setAudio(std::shared_ptr<const AudioClip> clip, double offset)
+{
+    QMutexLocker l(&m_mutex);
+    m_seq.setAudio(std::move(clip), offset);
+}
+
+void AudioEngine::setAudioOffset(double offset)
+{
+    QMutexLocker l(&m_mutex);
+    m_seq.setAudioOffset(offset);
+}
+
+void AudioEngine::setAudioVolume(float v)
+{
+    QMutexLocker l(&m_mutex);
+    m_seq.setAudioVolume(v);
+}
+
+void AudioEngine::setAudioEnabled(bool on)
+{
+    QMutexLocker l(&m_mutex);
+    m_seq.setAudioEnabled(on);
+}
+
+void AudioEngine::setGuitarEnabled(bool on)
+{
+    QMutexLocker l(&m_mutex);
+    m_seq.setGuitarEnabled(on);
 }
 
 void AudioEngine::previewChord(const ChordShape &chord)

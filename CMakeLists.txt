@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(GuitarChordPlayer VERSION 0.1.0 LANGUAGES CXX)
+project(GuitarChordPlayer VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,6 +15,8 @@ qt_add_executable(GuitarChordPlayer WIN32
     src/Sequencer.h src/Sequencer.cpp
     src/AudioEngine.h src/AudioEngine.cpp
     src/WavWriter.h src/WavWriter.cpp
+    src/AudioTrack.h src/AudioTrack.cpp
+    src/ChordDetector.h src/ChordDetector.cpp
     src/ChordDiagramWidget.h src/ChordDiagramWidget.cpp
     src/PatternWidget.h src/PatternWidget.cpp
     src/LyricsWidget.h src/LyricsWidget.cpp
@@ -30,7 +32,7 @@ qt_add_executable(GuitarChordPlayer WIN32
 # The LLM prompt is kept in docs/ and embedded so the app can copy it to the clipboard.
 qt_add_resources(GuitarChordPlayer docs
     PREFIX "/"
-    FILES docs/LLM_PROMPT.md
+    FILES docs/LLM_PROMPT.md resources/app.png
 )
 
 target_link_libraries(GuitarChordPlayer PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Multimedia Qt6::Network)
@@ -39,7 +41,14 @@ target_link_libraries(GuitarChordPlayer PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets 
 # CI sets APP_BUILD to the workflow run number; local builds are 0 (development).
 set(APP_BUILD 0 CACHE STRING "Build number, set by CI")
 set(UPDATE_REPO "bahalouati/GuitarChordPlayer" CACHE STRING "GitHub repository to update from")
-target_compile_definitions(GuitarChordPlayer PRIVATE APP_BUILD=${APP_BUILD} UPDATE_REPO="${UPDATE_REPO}")
+target_compile_definitions(GuitarChordPlayer PRIVATE APP_BUILD=${APP_BUILD} UPDATE_REPO="${UPDATE_REPO}"
+                                                     APP_VERSION="${PROJECT_VERSION}")
+
+if(WIN32)
+    # Executable icon and version information shown in Explorer.
+    configure_file(resources/app.rc.in ${CMAKE_CURRENT_BINARY_DIR}/app.rc @ONLY)
+    target_sources(GuitarChordPlayer PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
+endif()
 
 if(MSVC)
     target_compile_options(GuitarChordPlayer PRIVATE /W4 /permissive- /utf-8)

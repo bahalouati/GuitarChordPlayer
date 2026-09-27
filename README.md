@@ -19,8 +19,23 @@ Practice tools: tempo slider (25-150 %, the pitch stays the same), loop the curr
 count-in, jump to any section, and export to WAV. Save a song file while the app is running and it
 reloads automatically, which makes writing your own songs quick.
 
-The guitar sound is generated in real time (Karplus-Strong plucked-string synthesis with a simple body
-resonance), so no audio files are needed and any chord or pattern you write just plays.
+**Play along with the real song.** A song can have its recording (MP3, M4A, OGG, FLAC, WAV...) attached. The app plays
+it in sync with the guitar, through looping, jumping and the count-in. The tempo slider slows the recording down
+without changing its pitch. The mixer switches the guitar and the recording on and off separately and sets their
+volumes. **Sync** nudges the recording a few milliseconds earlier or later if needed, and is saved with the song.
+
+**New song from an MP3.** *File → New song from MP3 (Ctrl+I)* listens to a recording and writes the song for you. It
+finds the tempo, the beats, the bar lines (4/4 or 3/4) and the chords (major and minor), picks an easy capo position,
+and saves the song with the recording attached so you can play along right away. On test recordings with drums,
+bass and a melody it names the right chord about 93% of the time. Real songs vary, so fix any wrong chord by
+ear in the live editor while it plays. *File → Attach recording to this song* adds a recording to an existing song.
+It finds where bar 1 starts and offers the recording's tempo if it differs from the song's.
+
+The guitar sound is generated in real time, so no audio files are needed and any chord or pattern you write just
+plays. Each string is a physical model: two slightly detuned vibrating polarizations, frequency-dependent damping,
+string stiffness on the wound strings, and a pick attack. The strums take a realistic time across the strings,
+speed up as the pick moves, and vary in timing and strength like a human player. The sound gets guitar body
+resonance and a small stereo room.
 
 ## Adding your own songs
 
@@ -116,6 +131,7 @@ add `<chord name="..." frets="x32010"/>` to the song.
 | Ctrl+S | Save and replay (in the editor) |
 | Ctrl+K | Chord finder |
 | Ctrl+Shift+V | New song from an LLM answer on the clipboard |
+| Ctrl+I | New song from an MP3 (detect chords) |
 
 ## Building on Windows (MSVC)
 
@@ -134,9 +150,11 @@ add `<chord name="..." frets="x32010"/>` to the song.
 
 The `songs/` folder is copied next to the executable after every build.
 
-**Don't want to build it?** Download `GuitarChordPlayer-windows.zip` from the
-[latest release](https://github.com/bahalouati/GuitarChordPlayer/releases/latest), unzip it anywhere you can write to
-(e.g. Documents or Desktop, not Program Files), and run `GuitarChordPlayer.exe`.
+**Don't want to build it?** Download **`GuitarChordPlayer-Setup.exe`** from the
+[latest release](https://github.com/bahalouati/GuitarChordPlayer/releases/latest) and run it. It installs for your
+user (no admin rights needed), adds Start menu and optional desktop shortcuts, and has an uninstaller.
+There's also a portable `GuitarChordPlayer-windows.zip`: unzip it anywhere you can write to (e.g. Documents or Desktop,
+not Program Files) and run `GuitarChordPlayer.exe`.
 
 ### Updates
 
@@ -149,7 +167,10 @@ Linux, `git pull` and rebuild.
 
 Linux: `sudo apt install qt6-base-dev qt6-multimedia-dev`, then run the same two `cmake` commands.
 
-Command-line export without the GUI: `GuitarChordPlayer --render songs/amazing_grace.xml out.wav`.
+Command line, without the GUI:
+
+- `GuitarChordPlayer --render songs/amazing_grace.xml out.wav` exports a song (with its recording, if it has one).
+- `GuitarChordPlayer --detect song.mp3 song.xml` detects the chords of a recording and writes a song file.
 
 ## Song file format
 
@@ -263,6 +284,17 @@ while that bar plays (a piece can be empty). Without any `|`, the whole line is 
 under it. Verses with different words need their own sections (`Verse 1`, `Verse 2`). *Amazing Grace* in the
 examples shows how it works.
 
+### Recording: `<audio>`
+
+```xml
+<audio file="my song.mp3" offset="0.350"/>
+```
+
+`file` is relative to the song file (or a full path). `offset` is where bar 1 starts in the recording, in seconds.
+It can be negative if the song starts before the recording. The Sync control in the mixer changes it for you.
+Keep the song's tempo steady (one `bpm`) for songs with a recording. Sections with a different `bpm` work too,
+as long as the recording really changes tempo there.
+
 ### `<arrangement>`
 
 The order the sections are played in: `<play section="Chorus" repeat="2"/>`. If you leave it out, the
@@ -296,10 +328,13 @@ finger would.
 | `src/NewSongDialog.*`, `src/SongEditor.*`, `src/ChordFinderDialog.*` | Song creation and editing tools |
 | `src/LyricsWidget.*` | Lyrics view |
 | `src/Updater.*` | Checks GitHub releases and installs updates |
+| `src/AudioTrack.*` | Decoding recordings (Qt Multimedia) and WSOLA time stretching |
+| `src/ChordDetector.*` | Beat tracking, chroma and chord recognition for *New song from MP3* |
+| `installer.iss`, `resources/` | Windows installer (Inno Setup), icon and version info |
 | `src/LlmPrompt.*`, `docs/LLM_PROMPT.md` | The LLM prompt (embedded in the app) and reading LLM answers |
 | `src/ChordLibrary.*` | Built-in chord shapes, name normalisation, generated barre chords |
-| `src/GuitarSynth.*` | Karplus-Strong strings, body resonance, metronome click |
-| `src/Sequencer.*` | Sample-accurate playback: patterns → strums/picks, loop, count-in, position history |
+| `src/GuitarSynth.*` | Physically modelled strings, pick noise, body resonance, room reverb, metronome |
+| `src/Sequencer.*` | Sample-accurate playback: patterns → strums/picks, recording sync, loop, count-in |
 | `src/AudioEngine.*` | `QAudioSink` in pull mode; converts output latency into what you actually hear |
 | `src/ChordDiagramWidget.*`, `src/PatternWidget.*` | Custom-painted views |
 | `src/MainWindow.*` | UI, transport, file watching |

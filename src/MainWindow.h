@@ -13,6 +13,8 @@ class SongEditor;
 class Updater;
 class QDockWidget;
 class QCheckBox;
+class QSpinBox;
+struct AudioClip;
 class QFileSystemWatcher;
 class QLabel;
 class QListWidget;
@@ -43,6 +45,8 @@ private slots:
     void newSong();
     void toggleEditor();
     void showChordFinder();
+    void newSongFromAudio();
+    void attachRecording();
     void reloadSong();
     void exportWav();
     void refreshSongList();
@@ -61,6 +65,11 @@ private:
     QString userSongsDir() const;
     QString uniqueSongPath(const QString &title) const;
     void saveNewSong(const QString &title, const QString &xml);
+    // Recording (MP3) support
+    std::shared_ptr<const AudioClip> loadRecording(const QString &path);
+    void applyRecording(bool songChanged);
+    void saveAudioOffset();
+    bool analyseRecording(const AudioClip &clip, struct DetectedSong *out);
     void importSong(const QString &path);
     void watchPaths();
     void showError(const QString &message);
@@ -95,6 +104,14 @@ private:
     QCheckBox *m_loop = nullptr;
     QCheckBox *m_metronome = nullptr;
     QCheckBox *m_countIn = nullptr;
+    QCheckBox *m_guitarOn = nullptr;
+    QCheckBox *m_recordingOn = nullptr;
+    QSlider *m_recordingVolume = nullptr;
+    QSpinBox *m_syncMs = nullptr;
+    QWidget *m_recordingControls = nullptr;
+    QTimer *m_offsetSave = nullptr;
+    std::shared_ptr<const AudioClip> m_clip;
+    QString m_clipKey;   // path + modification time of the loaded recording
     QTimer *m_timer = nullptr;
     QFileSystemWatcher *m_watcher = nullptr;
 

@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 
 #include "ChordDiagramWidget.h"
+#include "AudioTrack.h"
+#include "ChordDetector.h"
 #include "ChordFinderDialog.h"
 #include "NewSongDialog.h"
 #include "LlmPrompt.h"
@@ -34,7 +36,13 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QSignalBlocker>
+#include <QInputDialog>
+#include <QProgressDialog>
 #include <QSettings>
+#include <QSpinBox>
+#include <QThread>
+#include <atomic>
 #include <QSlider>
 #include <QSplitter>
 #include <QStatusBar>
@@ -82,6 +90,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     QSettings s;
     m_tempo->setValue(s.value(QStringLiteral("tempo"), 100).toInt());
     m_volume->setValue(s.value(QStringLiteral("volume"), 80).toInt());
+    m_recordingVolume->setValue(s.value(QStringLiteral("recordingVolume"), 80).toInt());
     m_metronome->setChecked(s.value(QStringLiteral("metronome"), false).toBool());
     m_countIn->setChecked(s.value(QStringLiteral("countIn"), true).toBool());
     restoreGeometry(s.value(QStringLiteral("geometry")).toByteArray());
@@ -134,6 +143,7 @@ MainWindow::~MainWindow()
     QSettings s;
     s.setValue(QStringLiteral("tempo"), m_tempo->value());
     s.setValue(QStringLiteral("volume"), m_volume->value());
+    s.setValue(QStringLiteral("recordingVolume"), m_recordingVolume->value());
     s.setValue(QStringLiteral("metronome"), m_metronome->isChecked());
     s.setValue(QStringLiteral("countIn"), m_countIn->isChecked());
     s.setValue(QStringLiteral("geometry"), saveGeometry());
@@ -279,13 +289,58 @@ void MainWindow::buildUi()
     tr2->addWidget(m_metronome);
     tr2->addWidget(m_countIn);
     tr2->addStretch(1);
-    tr2->addWidget(new QLabel(tr("Volume")));
+    // Mixer: guitar and the song's recording (if it has one).
+    m_guitarOn = new QCheckBox(tr("Guitar"));
+    m_guitarOn->setChecked(true);
+    m_guitarOn->setFocusPolicy(Qt::NoFocus);
+    connect(m_guitarOn, &QCheckBox::toggled, m_engine, &AudioEngine::setGuitarEnabled);
+    tr2->addWidget(m_guitarOn);
     m_volume = new QSlider(Qt::Horizontal);
     m_volume->setRange(0, 100);
     m_volume->setFocusPolicy(Qt::NoFocus);
-    m_volume->setFixedWidth(140);
+    m_volume->setFixedWidth(110);
+    m_volume->setToolTip(tr("Guitar volume"));
     connect(m_volume, &QSlider::valueChanged, this, [this](int v) { m_engine->setVolume(v / 100.f); });
     tr2->addWidget(m_volume);
+
+    m_recordingControls = new QWidget;
+    auto *rec = new QHBoxLayout(m_recordingControls);
+    rec->setContentsMargins(12, 0, 0, 0);
+    m_recordingOn = new QCheckBox(tr("Recording"));
+    m_recordingOn->setChecked(true);
+    m_recordingOn->setFocusPolicy(Qt::NoFocus);
+    connect(m_recordingOn, &QCheckBox::toggled, m_engine, &AudioEngine::setAudioEnabled);
+    rec->addWidget(m_recordingOn);
+    m_recordingVolume = new QSlider(Qt::Horizontal);
+    m_recordingVolume->setRange(0, 100);
+    m_recordingVolume->setValue(80);
+    m_recordingVolume->setFocusPolicy(Qt::NoFocus);
+    m_recordingVolume->setFixedWidth(110);
+    m_recordingVolume->setToolTip(tr("Recording volume"));
+    connect(m_recordingVolume, &QSlider::valueChanged, this, [this](int v) { m_engine->setAudioVolume(v / 100.f); });
+    rec->addWidget(m_recordingVolume);
+    rec->addWidget(new QLabel(tr("Sync")));
+    m_syncMs = new QSpinBox;
+    m_syncMs->setRange(-60000, 600000);
+    m_syncMs->setSingleStep(10);
+    m_syncMs->setSuffix(tr(" ms"));
+    m_syncMs->setToolTip(tr("Where bar 1 starts in the recording. Nudge it until the guitar and the recording line up; "
+                            "it is saved in the song file."));
+    rec->addWidget(m_syncMs);
+    tr2->addWidget(m_recordingControls);
+    m_recordingControls->setEnabled(false);
+
+    m_offsetSave = new QTimer(this);
+    m_offsetSave->setSingleShot(true);
+    m_offsetSave->setInterval(800);
+    connect(m_offsetSave, &QTimer::timeout, this, &MainWindow::saveAudioOffset);
+    connect(m_syncMs, &QSpinBox::valueChanged, this, [this](int ms) {
+        if (!m_song || m_song->audioFile.isEmpty() || std::abs(ms - int(std::lround(m_song->audioOffset * 1000))) < 1)
+            return;
+        m_engine->setAudioOffset(ms / 1000.0);
+        m_song->audioOffset = ms / 1000.0;
+        m_offsetSave->start();
+    });
     rl->addLayout(tr1);
     rl->addLayout(tr2);
 
@@ -318,6 +373,9 @@ void MainWindow::buildMenus()
 {
     QMenu *file = menuBar()->addMenu(tr("&File"));
     file->addAction(tr("&New song..."), QKeySequence::New, this, &MainWindow::newSong);
+    file->addAction(tr("New song from &MP3 (detect chords)..."), QKeySequence(Qt::CTRL | Qt::Key_I), this,
+                    &MainWindow::newSongFromAudio);
+    file->addAction(tr("Attach &recording to this song..."), this, &MainWindow::attachRecording);
     file->addAction(tr("&Edit song"), QKeySequence(Qt::CTRL | Qt::Key_E), this, &MainWindow::toggleEditor);
     file->addAction(tr("New song from LLM &answer (clipboard)"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V), this, [this] {
         const QString xml = extractSongXml(QApplication::clipboard()->text());
@@ -373,8 +431,8 @@ void MainWindow::buildMenus()
     connect(autoCheck, &QAction::toggled, this, [](bool on) { QSettings().setValue(QStringLiteral("autoUpdateCheck"), on); });
     help->addSeparator();
     help->addAction(tr("About"), this, [this] {
-        const QString build = Updater::currentBuild() > 0 ? tr("Build %1").arg(Updater::currentBuild())
-                                                          : tr("Development build");
+        const QString build = QStringLiteral("%1 %2").arg(QApplication::applicationVersion(),
+            Updater::currentBuild() > 0 ? tr("(build %1)").arg(Updater::currentBuild()) : tr("(development build)"));
         QMessageBox::about(this, tr("About Guitar Chord Player"),
                            tr("<b>Guitar Chord Player</b> - %1<br>Plays chord charts from XML files with a "
                               "synthesized (Karplus-Strong) guitar so you can see and hear how songs "
@@ -655,6 +713,7 @@ void MainWindow::applySong(std::shared_ptr<Song> song, std::shared_ptr<Timeline>
     else
         m_engine->setTimeline(tl);
     m_pattern->setTimeline(tl);
+    applyRecording(!keep);
     m_lyrics->setTimeline(tl);
     m_lyrics->setVisible(!tl->lyricLines.isEmpty());
     applyTempo();
@@ -666,6 +725,8 @@ void MainWindow::applySong(std::shared_ptr<Song> song, std::shared_ptr<Timeline>
     info += tr("%1 BPM  ·  %2 beats per bar").arg(song->bpm).arg(song->beatsPerBar);
     if (song->capo > 0)
         info += tr("  ·  Capo %1").arg(song->capo);
+    if (!song->audioFile.isEmpty())
+        info += tr("  ·  ♪ %1").arg(QFileInfo(song->audioFile).fileName());
     m_info->setText(info);
     setWindowTitle(tr("%1 - Guitar Chord Player").arg(song->title));
 
@@ -900,6 +961,8 @@ void MainWindow::showFormatHelp()
         "<tt>D</tt>/<tt>U</tt> full down/up strum, <tt>d</tt>/<tt>u</tt> light strum, "
         "<tt>X</tt> muted chuck, <tt>-</tt> rest, <tt>B</tt> bass note, <tt>A</tt> alternate bass, "
         "<tt>1</tt>-<tt>6</tt> pick a string (1 = high e), <tt>B+1</tt> pinch, <tt>&gt;D</tt> accent.<br><br>"
+        "<b>Recording:</b> <tt>&lt;audio file=\"song.mp3\" offset=\"0.35\"/&gt;</tt> plays along "
+        "(offset = where bar 1 starts, in seconds).<br><br>"
         "<b>Built-in patterns</b> (no &lt;pattern&gt; needed): folk, pop, rock, drive, ballad, whole, half, "
         "quarters, reggae, country, sixteenths, arpeggio, arpeggio-slow, travis, waltz, waltz-pick, six-eight, "
         "six-eight-pick. A section without <tt>pattern</tt> uses folk.<br><br>"
@@ -910,4 +973,221 @@ void MainWindow::showFormatHelp()
         "<tt>N.C.</tt> is silence. Any chord name works (Tools &gt; Chord finder). See README.md for details.<br><br>"
         "<b>Easiest:</b> File &gt; New song lets you type a plain chord sheet instead."));
     box.exec();
+}
+
+// ---------------------------------------------------------------- Recordings
+
+std::shared_ptr<const AudioClip> MainWindow::loadRecording(const QString &path)
+{
+    QProgressDialog progress(tr("Loading %1...").arg(QFileInfo(path).fileName()), QString(), 0, 100, this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(400);
+    QString err;
+    auto clip = decodeAudioFile(path, m_engine->sampleRate(), &err,
+                                [&](double f) { progress.setValue(int(f * 100)); });
+    progress.close();
+    if (!clip)
+        showError(tr("<b>Can't play the recording:</b> %1").arg(err.toHtmlEscaped()));
+    return clip;
+}
+
+void MainWindow::applyRecording(bool songChanged)
+{
+    const QString file = m_song ? m_song->audioFile : QString();
+    const QString key = file.isEmpty() ? QString()
+                                       : file + QLatin1Char('@') + QString::number(QFileInfo(file).lastModified().toMSecsSinceEpoch());
+    if (key != m_clipKey) {
+        m_clipKey = key;
+        m_clip = key.isEmpty() ? nullptr : loadRecording(file);
+        m_engine->setAudio(m_clip, m_song ? m_song->audioOffset : 0.0);
+    } else if (m_clip) {
+        m_engine->setAudioOffset(m_song->audioOffset);
+    }
+    Q_UNUSED(songChanged);
+    m_recordingControls->setEnabled(bool(m_clip));
+    const QSignalBlocker block(m_syncMs);
+    m_syncMs->setValue(m_song ? int(std::lround(m_song->audioOffset * 1000)) : 0);
+}
+
+// Replaces (or adds) the <audio .../> element of a song file's text.
+static QString withAudioElement(QString xml, const QString &file, double offset)
+{
+    const QString element = QStringLiteral("<audio file=\"%1\" offset=\"%2\"/>")
+            .arg(file.toHtmlEscaped(), QString::number(offset, 'f', 3));
+    static const QRegularExpression existing(QStringLiteral("<audio\\b[^>]*/>"));
+    if (xml.contains(existing))
+        return xml.replace(existing, element);
+    static const QRegularExpression songTag(QStringLiteral("<song\\b[^>]*>"));
+    const auto m = songTag.match(xml);
+    if (!m.hasMatch())
+        return xml;
+    return xml.insert(int(m.capturedEnd()), QStringLiteral("\n  ") + element);
+}
+
+void MainWindow::saveAudioOffset()
+{
+    if (!m_song || m_song->audioFile.isEmpty())
+        return;
+    QFile f(m_song->filePath);
+    if (!f.open(QIODevice::ReadOnly))
+        return;
+    QString xml = QString::fromUtf8(f.readAll());
+    f.close();
+    static const QRegularExpression fileAttr(QStringLiteral("<audio\\b[^>]*file=\"([^\"]*)\""));
+    const auto m = fileAttr.match(xml);
+    if (!m.hasMatch())
+        return;
+    const QString updated = withAudioElement(xml, m.captured(1), m_song->audioOffset);
+    if (updated == xml || !f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return;
+    f.write(updated.toUtf8());
+    f.close();
+    m_status->setText(tr("Sync saved (%1 ms)").arg(int(std::lround(m_song->audioOffset * 1000))));
+}
+
+bool MainWindow::analyseRecording(const AudioClip &clip, DetectedSong *out)
+{
+    QProgressDialog progress(tr("Listening to the recording: finding the beat and the chords..."), tr("Cancel"), 0, 100, this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(0);
+    std::atomic<bool> cancel{false};
+    std::atomic<int> percent{0};
+    bool ok = false;
+    QString err;
+    QThread *worker = QThread::create([&] {
+        ok = detectChords(clip, out, &err, [&](double f) { percent = int(f * 100); }, &cancel);
+    });
+    QEventLoop loop;
+    connect(worker, &QThread::finished, &loop, &QEventLoop::quit);
+    QTimer poll;
+    connect(&poll, &QTimer::timeout, this, [&] {
+        progress.setValue(percent.load());
+        if (progress.wasCanceled())
+            cancel = true;
+    });
+    poll.start(50);
+    worker->start();
+    loop.exec();
+    worker->wait();
+    delete worker;
+    progress.close();
+    if (!ok && !cancel)
+        QMessageBox::warning(this, tr("Chord detection"), err.isEmpty() ? tr("Could not analyse the recording.") : err);
+    return ok && !cancel;
+}
+
+void MainWindow::newSongFromAudio()
+{
+    const QString src = QFileDialog::getOpenFileName(this, tr("New song from a recording"), QDir::homePath(),
+                                                     tr("Audio (*.mp3 *.m4a *.aac *.ogg *.opus *.flac *.wav *.wma)"));
+    if (src.isEmpty())
+        return;
+    bool okTitle = false;
+    const QString title = QInputDialog::getText(this, tr("New song from a recording"), tr("Song title:"),
+                                                QLineEdit::Normal, QFileInfo(src).completeBaseName(), &okTitle).trimmed();
+    if (!okTitle || title.isEmpty())
+        return;
+
+    auto clip = loadRecording(src);
+    if (!clip)
+        return;
+    DetectedSong detected;
+    if (!analyseRecording(*clip, &detected))
+        return;
+
+    // Keep the recording next to the song so the song folder is self-contained.
+    const QString xmlPath = uniqueSongPath(title);
+    const QString audioName = QFileInfo(xmlPath).completeBaseName() + QLatin1Char('.') + QFileInfo(src).suffix().toLower();
+    const QString audioPath = QFileInfo(xmlPath).absoluteDir().absoluteFilePath(audioName);
+    if (QFileInfo(src).absoluteFilePath() != audioPath && !QFile::copy(src, audioPath)) {
+        QMessageBox::warning(this, tr("New song"), tr("Could not copy the recording to %1").arg(audioPath));
+        return;
+    }
+    QFile f(xmlPath);
+    if (!f.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, tr("New song"), tr("Could not save %1").arg(xmlPath));
+        return;
+    }
+    f.write(detectedSongToXml(detected, title, QString(), audioName).toUtf8());
+    f.close();
+    refreshSongList();
+    if (loadSongFile(xmlPath)) {
+        m_status->setText(tr("%1 bars at %2 BPM%3 - the chords were detected automatically, fix any wrong ones "
+                             "in the editor while it plays")
+                          .arg(detected.bars.size()).arg(qRound(detected.bpm))
+                          .arg(detected.capo ? tr(", capo %1").arg(detected.capo) : QString()));
+        m_editorDock->show();
+    }
+}
+
+void MainWindow::attachRecording()
+{
+    if (!m_song) {
+        QMessageBox::information(this, tr("Attach recording"), tr("Open a song first."));
+        return;
+    }
+    QString songPath = m_song->filePath;
+    const bool inMySongs = QFileInfo(songPath).absolutePath().startsWith(QDir(userSongsDir()).absolutePath());
+    if (!inMySongs) {
+        if (QMessageBox::question(this, tr("Attach recording"),
+                                  tr("This is an example song. Make a copy in My Songs and attach the recording to the copy?"))
+            != QMessageBox::Yes)
+            return;
+        const QString copy = uniqueSongPath(m_song->title);
+        if (!QFile::copy(songPath, copy)) {
+            QMessageBox::warning(this, tr("Attach recording"), tr("Could not copy the song to %1").arg(copy));
+            return;
+        }
+        QFile::setPermissions(copy, QFile::permissions(copy) | QFileDevice::WriteOwner);
+        songPath = copy;
+    }
+    const QString src = QFileDialog::getOpenFileName(this, tr("Attach a recording"), QDir::homePath(),
+                                                     tr("Audio (*.mp3 *.m4a *.aac *.ogg *.opus *.flac *.wav *.wma)"));
+    if (src.isEmpty())
+        return;
+    auto clip = loadRecording(src);
+    if (!clip)
+        return;
+    DetectedSong detected;
+    if (!analyseRecording(*clip, &detected))
+        return;
+
+    const QDir dir = QFileInfo(songPath).absoluteDir();
+    QString audioName = QFileInfo(songPath).completeBaseName() + QLatin1Char('.') + QFileInfo(src).suffix().toLower();
+    if (QFileInfo(src).absoluteDir() == dir)
+        audioName = QFileInfo(src).fileName();
+    else if (!QFile::exists(dir.absoluteFilePath(audioName)) && !QFile::copy(src, dir.absoluteFilePath(audioName))) {
+        QMessageBox::warning(this, tr("Attach recording"), tr("Could not copy the recording next to the song."));
+        return;
+    }
+
+    QFile f(songPath);
+    if (!f.open(QIODevice::ReadOnly))
+        return;
+    QString xml = QString::fromUtf8(f.readAll());
+    f.close();
+    xml = withAudioElement(xml, audioName, detected.offset);
+    // Offer the recording's tempo if the song's differs noticeably.
+    if (std::abs(detected.bpm - m_song->bpm) / m_song->bpm > 0.03) {
+        const auto r = QMessageBox::question(this, tr("Attach recording"),
+                                             tr("The recording is about %1 BPM, the song says %2 BPM.\n"
+                                                "Use the recording's tempo so they stay together?")
+                                             .arg(qRound(detected.bpm)).arg(m_song->bpm));
+        if (r == QMessageBox::Yes) {
+            static const QRegularExpression bpmAttr(QStringLiteral("(<song\\b[^>]*\\bbpm=\")[^\"]*(\")"));
+            const auto bm = bpmAttr.match(xml);
+            if (bm.hasMatch())
+                xml.replace(int(bm.capturedStart()), int(bm.capturedLength()),
+                            bm.captured(1) + QString::number(detected.bpm, 'f', 2) + bm.captured(2));
+        }
+    }
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        QMessageBox::warning(this, tr("Attach recording"), tr("Could not save %1").arg(songPath));
+        return;
+    }
+    f.write(xml.toUtf8());
+    f.close();
+    refreshSongList();
+    loadSongFile(songPath);
+    m_status->setText(tr("Recording attached. If the guitar and the recording drift apart, nudge Sync until they line up."));
 }

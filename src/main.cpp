@@ -1,12 +1,22 @@
 #include "MainWindow.h"
 #include "Song.h"
 #include "WavWriter.h"
+#include "AudioTrack.h"
+#include "ChordDetector.h"
+
+#include <QFileInfo>
 
 #include <QApplication>
+#include <QIcon>
 #include <QTextStream>
 
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_LINUX
+    // Prefer Qt's FFmpeg backend for decoding MP3s (the GStreamer one needs extra plugins).
+    if (qEnvironmentVariableIsEmpty("QT_MEDIA_BACKEND"))
+        qputenv("QT_MEDIA_BACKEND", "ffmpeg");
+#endif
     // Headless export: GuitarChordPlayer --render song.xml out.wav
     if (argc == 4 && QString::fromLocal8Bit(argv[1]) == QLatin1String("--render")) {
         QCoreApplication app(argc, argv);
@@ -14,16 +24,50 @@ int main(int argc, char *argv[])
         QString error;
         auto song = loadSong(QString::fromLocal8Bit(argv[2]), &error);
         auto tl = song ? buildTimeline(song, &error) : nullptr;
-        if (!tl || !exportSongToWav(tl, QString::fromLocal8Bit(argv[3]), 1.0, &error)) {
+        std::shared_ptr<AudioClip> clip;
+        if (tl && !song->audioFile.isEmpty()) {
+            clip = decodeAudioFile(song->audioFile, 44100, &error);
+            if (!clip)
+                err << "Warning: recording not loaded: " << error << Qt::endl;
+        }
+        if (!tl || !exportSongToWav(tl, QString::fromLocal8Bit(argv[3]), 1.0, &error, clip, song->audioOffset)) {
             err << "Error: " << error << Qt::endl;
             return 1;
         }
         return 0;
     }
 
+    // Chord detection: GuitarChordPlayer --detect song.mp3 out.xml
+    if (argc == 4 && QString::fromLocal8Bit(argv[1]) == QLatin1String("--detect")) {
+        QCoreApplication app(argc, argv);
+        QTextStream err(stderr);
+        QString error;
+        const QString in = QString::fromLocal8Bit(argv[2]);
+        auto clip = decodeAudioFile(in, 44100, &error);
+        DetectedSong song;
+        if (!clip || !detectChords(*clip, &song, &error)) {
+            err << "Error: " << error << Qt::endl;
+            return 1;
+        }
+        QFile f(QString::fromLocal8Bit(argv[3]));
+        if (!f.open(QIODevice::WriteOnly)) {
+            err << "Error: cannot write " << f.fileName() << Qt::endl;
+            return 1;
+        }
+        f.write(detectedSongToXml(song, QFileInfo(in).completeBaseName(), QString(), QFileInfo(in).fileName()).toUtf8());
+        err << "bpm " << song.bpm << ", " << song.beatsPerBar << " beats/bar, offset " << song.offset
+            << "s, capo " << song.capo << ", key " << song.key << ", " << song.bars.size() << " bars, fit "
+            << song.confidence << Qt::endl;
+        return 0;
+    }
+
     QApplication app(argc, argv);
     QApplication::setOrganizationName(QStringLiteral("GuitarChordPlayer"));
     QApplication::setApplicationName(QStringLiteral("GuitarChordPlayer"));
+#ifdef APP_VERSION
+    QApplication::setApplicationVersion(QStringLiteral(APP_VERSION));
+#endif
+    QApplication::setWindowIcon(QIcon(QStringLiteral(":/resources/app.png")));
     MainWindow w;
     w.show();
     if (argc > 1)

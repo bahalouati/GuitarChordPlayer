@@ -34,10 +34,26 @@ jobs:
             $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--render", "`"$($_.FullName)`"", "$env:RUNNER_TEMP/$($_.BaseName).wav" -Wait -PassThru -NoNewWindow
             if ($p.ExitCode -ne 0) { throw "Rendering $($_.Name) failed" }
           }
+          # Chord detection round trip: render a song, then detect its chords from the WAV.
+          $p = Start-Process -FilePath dist/GuitarChordPlayer.exe -ArgumentList "--detect", "$env:RUNNER_TEMP/pop_practice.wav", "$env:RUNNER_TEMP/detected.xml" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Chord detection failed" }
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+          }
+          & $iscc /DAppVersion=1.0.${{ github.run_number }} installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
       - uses: actions/upload-artifact@v4
         with:
           name: GuitarChordPlayer-windows
           path: dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GuitarChordPlayer-Setup
+          path: GuitarChordPlayer-Setup.exe
       - name: Zip for release
         if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
         shell: pwsh
@@ -51,7 +67,9 @@ jobs:
           name: Build ${{ github.run_number }}
           body: ${{ github.event.head_commit.message }}
           target_commitish: ${{ github.sha }}
-          files: GuitarChordPlayer-windows.zip
+          files: |
+            GuitarChordPlayer-windows.zip
+            GuitarChordPlayer-Setup.exe
           make_latest: true
 
   linux:
@@ -65,4 +83,6 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j4
       - name: Smoke test (render every song to WAV)
-        run: find songs -name '*.xml' -print0 | while IFS= read -r -d '' f; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav" || exit 1; done
+        run: |
+          find songs -name '*.xml' -print0 | while IFS= read -r -d '' f; do ./build/GuitarChordPlayer --render "$f" "/tmp/$(basename "$f" .xml).wav" || exit 1; done
+          ./build/GuitarChordPlayer --detect /tmp/pop_practice.wav /tmp/detected.xml

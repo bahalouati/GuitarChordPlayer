@@ -1,6 +1,7 @@
 #include "Song.h"
 
 #include <QFile>
+#include <QDir>
 #include <QFileInfo>
 #include <QHash>
 #include <QRegularExpression>
@@ -369,6 +370,16 @@ std::shared_ptr<Song> loadSongFromData(const QByteArray &data, const QString &pa
                 }
                 currentSection->lines << line;
             }
+        } else if (name == QLatin1String("audio")) {
+            const QString file = a.value(QLatin1String("file")).toString();
+            if (file.isEmpty()) {
+                fail(QStringLiteral("<audio> needs a file, e.g. <audio file=\"song.mp3\" offset=\"0.5\"/>"));
+                break;
+            }
+            const QFileInfo fi(file);
+            song->audioFile = fi.isAbsolute() ? file
+                                              : QFileInfo(path).absoluteDir().absoluteFilePath(file);
+            song->audioOffset = a.value(QLatin1String("offset")).toDouble();
         } else if (name == QLatin1String("play")) {
             ArrangementItem it;
             it.section = a.value(QLatin1String("section")).toString();
@@ -381,7 +392,7 @@ std::shared_ptr<Song> loadSongFromData(const QByteArray &data, const QString &pa
         } else if (name != QLatin1String("chords") && name != QLatin1String("patterns")
                    && name != QLatin1String("sections") && name != QLatin1String("arrangement")) {
             fail(QStringLiteral("Unknown tag <%1>. Allowed tags: song, chords, chord, patterns, pattern, "
-                                "sections, section, bars, bar, line, arrangement, play").arg(name.toString()));
+                                "sections, section, bars, bar, line, arrangement, play, audio").arg(name.toString()));
         }
     }
 
