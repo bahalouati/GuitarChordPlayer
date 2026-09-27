@@ -23,6 +23,8 @@ public:
 private slots:
     void validate();
     void tryAccept();
+    void copyPrompt();
+    void pasteAnswer();
 
 private:
     bool build(QString *error);
@@ -36,4 +38,5 @@ private:
     QLabel *m_status;
     QTimer *m_timer;
     QString m_xml;
+    QString m_titleOverride;
 };

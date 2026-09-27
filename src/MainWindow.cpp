@@ -3,6 +3,8 @@
 #include "ChordDiagramWidget.h"
 #include "ChordFinderDialog.h"
 #include "NewSongDialog.h"
+#include "LlmPrompt.h"
+#include "LyricsWidget.h"
 #include "PatternWidget.h"
 #include "SongEditor.h"
 #include "WavWriter.h"
@@ -10,6 +12,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QCloseEvent>
 #include <QCoreApplication>
 #include <QDesktopServices>
@@ -79,7 +82,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_metronome->setChecked(s.value(QStringLiteral("metronome"), false).toBool());
     m_countIn->setChecked(s.value(QStringLiteral("countIn"), true).toBool());
     restoreGeometry(s.value(QStringLiteral("geometry")).toByteArray());
-    restoreState(s.value(QStringLiteral("windowState")).toByteArray());
+    if (!restoreState(s.value(QStringLiteral("windowState")).toByteArray()))
+        resizeDocks({m_editorDock}, {460}, Qt::Horizontal);
 
     refreshSongList();
     const QString last = s.value(QStringLiteral("lastSong")).toString();
@@ -191,6 +195,17 @@ void MainWindow::buildUi()
     chords->addStretch(1);
     rl->addLayout(chords, 5);
 
+    m_lyrics = new LyricsWidget;
+    m_lyrics->hide();
+    connect(m_lyrics, &LyricsWidget::lineClicked, this, [this](int line) {
+        if (m_song && m_editor->filePath() != m_song->filePath)
+            m_editor->openFile(m_song->filePath);
+        m_editorDock->show();
+        m_editorDock->raise();
+        m_editor->goToLine(line);
+    });
+    rl->addWidget(m_lyrics, 2);
+
     m_pattern = new PatternWidget;
     rl->addWidget(m_pattern, 2);
 
@@ -266,6 +281,7 @@ void MainWindow::buildUi()
     m_editorDock->setWidget(m_editor);
     addDockWidget(Qt::RightDockWidgetArea, m_editorDock);
     m_editorDock->hide();
+    connect(m_editor, &SongEditor::liveEdit, this, &MainWindow::applyLiveEdit);
     connect(m_editor, &SongEditor::saved, this, [this](const QString &path) {
         // While switching songs the editor may save the previous one; don't load it back.
         if (!m_loading)
@@ -283,6 +299,18 @@ void MainWindow::buildMenus()
     QMenu *file = menuBar()->addMenu(tr("&File"));
     file->addAction(tr("&New song..."), QKeySequence::New, this, &MainWindow::newSong);
     file->addAction(tr("&Edit song"), QKeySequence(Qt::CTRL | Qt::Key_E), this, &MainWindow::toggleEditor);
+    file->addAction(tr("New song from LLM &answer (clipboard)"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V), this, [this] {
+        const QString xml = extractSongXml(QApplication::clipboard()->text());
+        if (xml.isEmpty()) {
+            QMessageBox::information(this, tr("New song from LLM answer"),
+                                     tr("The clipboard has no song in it. Copy the LLM's whole answer and try again.\n\n"
+                                        "To get one: Help > Copy LLM prompt, paste it into an LLM and fill in the song."));
+            return;
+        }
+        QString err;
+        auto song = loadSongFromData(xml.toUtf8(), QString(), &err);
+        saveNewSong(song && !song->title.isEmpty() ? song->title : tr("LLM Song"), xml);
+    });
     file->addAction(tr("&Open song..."), QKeySequence::Open, this, &MainWindow::openSong);
     file->addAction(tr("&Reload song"), QKeySequence(Qt::Key_F5), this, &MainWindow::reloadSong);
     file->addAction(tr("Refresh song &list"), this, &MainWindow::refreshSongList);
@@ -312,6 +340,11 @@ void MainWindow::buildMenus()
 
     QMenu *help = menuBar()->addMenu(tr("&Help"));
     help->addAction(tr("Song XML format..."), this, &MainWindow::showFormatHelp);
+    help->addAction(tr("Copy LLM prompt"), this, [this] {
+        QApplication::clipboard()->setText(llmPrompt());
+        m_status->setText(tr("LLM prompt copied - paste it into ChatGPT, Claude, Gemini..., then use "
+                             "File > New song from LLM answer"));
+    });
     help->addAction(tr("About"), this, [this] {
         QMessageBox::about(this, tr("About Guitar Chord Player"),
                            tr("<b>Guitar Chord Player</b><br>Plays chord charts from XML files with a "
@@ -422,9 +455,14 @@ void MainWindow::newSong()
     NewSongDialog dlg(this);
     if (dlg.exec() != QDialog::Accepted)
         return;
-    const QString path = uniqueSongPath(dlg.title());
+    saveNewSong(dlg.title(), dlg.xml());
+}
+
+void MainWindow::saveNewSong(const QString &title, const QString &xml)
+{
+    const QString path = uniqueSongPath(title);
     QFile f(path);
-    if (!f.open(QIODevice::WriteOnly) || f.write(dlg.xml().toUtf8()) < 0) {
+    if (!f.open(QIODevice::WriteOnly) || f.write(xml.toUtf8()) < 0) {
         QMessageBox::warning(this, tr("New song"), tr("Could not save %1").arg(path));
         return;
     }
@@ -535,21 +573,45 @@ bool MainWindow::loadSongFileImpl(const QString &path, bool keepPosition)
         watchPaths();
         return false;
     }
-    showError(QString());
-
-    const int oldBar = m_viewBar;
-    const bool wasPlaying = m_engine->isPlaying();
-    m_song = song;
-    m_timeline = tl;
-    m_engine->setTimeline(tl);
-    m_pattern->setTimeline(tl);
-    applyTempo();
-
     if (!m_watcher->files().isEmpty())
         m_watcher->removePaths(m_watcher->files());
     if (m_editor->filePath() != path)
         m_editor->openFile(path);
+    applySong(song, tl, keepPosition);
     watchPaths();
+    m_status->setText(keepPosition ? tr("Reloaded %1").arg(QFileInfo(path).fileName())
+                                   : tr("Loaded %1  ·  %n bar(s)", nullptr, tl->bars.size()).arg(QFileInfo(path).fileName()));
+    return true;
+}
+
+void MainWindow::applyLiveEdit(const QString &path, const QByteArray &xml)
+{
+    if (m_loading)
+        return;
+    QString err;
+    auto song = loadSongFromData(xml, path, &err);
+    auto tl = song ? buildTimeline(song, &err) : nullptr;
+    if (!tl)
+        return; // the editor already shows the problem
+    applySong(song, tl, m_song && m_song->filePath == path);
+    m_status->setText(tr("Playing your unsaved changes - Ctrl+S saves them"));
+}
+
+void MainWindow::applySong(std::shared_ptr<Song> song, std::shared_ptr<Timeline> tl, bool keepPosition)
+{
+    const QString path = song->filePath;
+    showError(QString());
+    const bool keep = keepPosition && m_timeline;
+    m_song = song;
+    m_timeline = tl;
+    if (keep)
+        m_engine->replaceTimeline(tl);
+    else
+        m_engine->setTimeline(tl);
+    m_pattern->setTimeline(tl);
+    m_lyrics->setTimeline(tl);
+    m_lyrics->setVisible(!tl->lyricLines.isEmpty());
+    applyTempo();
 
     m_title->setText(song->title);
     QString info = song->artist;
@@ -573,18 +635,13 @@ bool MainWindow::loadSongFileImpl(const QString &path, bool keepPosition)
         if (m_songList->item(i)->data(Qt::UserRole).toString() == path)
             m_songList->setCurrentRow(i);
 
-    m_viewBar = 0;
-    if (keepPosition && oldBar < tl->bars.size()) {
-        m_engine->seekToBar(oldBar);
-        if (wasPlaying)
-            m_engine->play();
-        m_status->setText(tr("Reloaded %1").arg(QFileInfo(path).fileName()));
+    if (keep) {
+        m_viewBar = std::min(m_viewBar, int(tl->bars.size()) - 1);
     } else {
-        m_status->setText(tr("Loaded %1  ·  %n bar(s)", nullptr, tl->bars.size()).arg(QFileInfo(path).fileName()));
+        m_viewBar = 0;
         setPlayButton(false);
     }
     applyLoop();
-    return true;
 }
 
 void MainWindow::setPlayButton(bool playing)
@@ -736,6 +793,7 @@ void MainWindow::updateView()
     }
 
     m_pattern->setPosition(bar, step, s.stepFraction, s.playing && !s.countIn);
+    m_lyrics->setPosition(bar, (step + s.stepFraction) / std::max(1, b.stepCount()), s.playing && !s.countIn);
 }
 
 void MainWindow::openSong()
@@ -799,6 +857,8 @@ void MainWindow::showFormatHelp()
         "<b>Built-in patterns</b> (no &lt;pattern&gt; needed): folk, pop, rock, drive, ballad, whole, half, "
         "quarters, reggae, country, sixteenths, arpeggio, arpeggio-slow, travis, waltz, waltz-pick, six-eight, "
         "six-eight-pick. A section without <tt>pattern</tt> uses folk.<br><br>"
+        "<b>Lyrics:</b> <tt>&lt;line chords=\"G | D\"&gt;words in bar one | bar two&lt;/line&gt;</tt> instead of "
+        "&lt;bars&gt; - one lyric piece per bar.<br><br>"
         "<b>Bars:</b> chords separated by <tt>|</tt>; several chords in one bar share it evenly, "
         "or give lengths in beats: <tt>C:3 G:1</tt>. <tt>%</tt> repeats the previous chord, "
         "<tt>N.C.</tt> is silence. Any chord name works (Tools &gt; Chord finder). See README.md for details.<br><br>"

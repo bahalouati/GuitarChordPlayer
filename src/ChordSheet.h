@@ -9,6 +9,7 @@
 //
 //   [Verse] folk x2
 //   G | D | Em | C
+//   Almost | heaven, West | Vir- | ginia      <- optional lyrics, one piece per bar
 //
 //   [Chorus] drive 96bpm
 //   C | G | D | Em

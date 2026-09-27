@@ -1,5 +1,7 @@
 #include "ChordSheet.h"
 
+#include "ChordLibrary.h"
+
 #include <QRegularExpression>
 #include <QStringList>
 #include <QVector>
@@ -7,13 +9,38 @@
 
 namespace {
 
+struct SheetLine
+{
+    QString chords;
+    QString lyric;
+};
+
 struct SheetSection
 {
     QString name;
     QString pattern;
     double bpm = 0;
-    QStringList lines;
+    QVector<SheetLine> lines;
 };
+
+// True when every token on the line is a chord (optionally with :beats), %, N.C. or a bar line.
+bool isChordLine(const QString &line)
+{
+    const QStringList toks = QString(line).replace(QLatin1Char('|'), QLatin1Char(' '))
+            .split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+    if (toks.isEmpty())
+        return false;
+    for (QString t : toks) {
+        const int colon = t.lastIndexOf(QLatin1Char(':'));
+        if (colon > 0)
+            t = t.left(colon);
+        if (t == QLatin1String("%") || t == QLatin1String("N.C.") || t == QLatin1String("NC"))
+            continue;
+        if (!ChordLibrary::lookup(t))
+            return false;
+    }
+    return true;
+}
 
 struct SheetPlay
 {
@@ -71,6 +98,20 @@ bool chordSheetToXml(const ChordSheetInfo &info, const QString &sheet, QString *
             continue;
         }
 
+        // A line of words right under a line of chords: the lyrics for those bars.
+        if (!isChordLine(line)) {
+            if (current < 0 || currentIsReuse || sections[current].lines.isEmpty()
+                || !sections[current].lines.last().lyric.isEmpty()) {
+                if (error)
+                    *error = QStringLiteral("Line %1: \"%2\" is not a line of chords. If these are lyrics, "
+                                            "put them directly under the chords they go with.")
+                            .arg(ln + 1).arg(line.left(40));
+                return false;
+            }
+            sections[current].lines.last().lyric = line;
+            continue;
+        }
+
         // A line of chords.
         if (current < 0) {
             sections << SheetSection{QStringLiteral("Song"), QString(), 0, {}};
@@ -90,7 +131,7 @@ bool chordSheetToXml(const ChordSheetInfo &info, const QString &sheet, QString *
             bars.remove(0, 1);
         while (bars.endsWith(QLatin1Char('|')))
             bars.chop(1);
-        sections[current].lines << bars.trimmed();
+        sections[current].lines << SheetLine{bars.trimmed(), QString()};
     }
 
     for (const SheetSection &s : sections) {
@@ -130,8 +171,16 @@ bool chordSheetToXml(const ChordSheetInfo &info, const QString &sheet, QString *
             w.writeAttribute(QStringLiteral("pattern"), s.pattern);
         if (s.bpm > 0)
             w.writeAttribute(QStringLiteral("bpm"), QString::number(s.bpm));
-        for (const QString &l : s.lines)
-            w.writeTextElement(QStringLiteral("bars"), l);
+        for (const SheetLine &l : s.lines) {
+            if (l.lyric.isEmpty()) {
+                w.writeTextElement(QStringLiteral("bars"), l.chords);
+            } else {
+                w.writeStartElement(QStringLiteral("line"));
+                w.writeAttribute(QStringLiteral("chords"), l.chords);
+                w.writeCharacters(l.lyric);
+                w.writeEndElement();
+            }
+        }
         w.writeEndElement();
     }
     w.writeEndElement();
@@ -157,19 +206,27 @@ QString exampleChordSheet()
         "# One section per [Name]. After the name you can add a pattern,\n"
         "# x2 to repeat it, or 100bpm to change the tempo.\n"
         "# Chords: bars are separated by |  -  two chords in one bar share it.\n"
+        "# Lyrics (optional): a line of words right under its chords,\n"
+        "# with | where the bars change.\n"
         "\n"
         "[Intro] arpeggio\n"
         "G | Cadd9 | Em | D\n"
         "\n"
-        "[Verse] folk x2\n"
+        "[Verse 1] folk\n"
         "G | D | Em | C\n"
+        "Here are the | words for the | first | line\n"
+        "G | D | C | C\n"
+        "and the | second line | goes | here\n"
         "\n"
         "[Chorus] drive\n"
         "C | G | D | Em\n"
         "C | G | D | D\n"
         "\n"
+        "[Verse 2] folk\n"
+        "G | D | Em | C\n"
+        "G | D | C | C\n"
+        "\n"
         "# Use a section again by writing just its name:\n"
-        "[Verse]\n"
         "[Chorus] x2\n"
         "\n"
         "[Outro] whole\n"

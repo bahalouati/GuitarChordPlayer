@@ -24,6 +24,23 @@ void Sequencer::setTimeline(std::shared_ptr<const Timeline> tl)
     recordPos(0, 0, 0);
 }
 
+void Sequencer::replaceTimeline(std::shared_ptr<const Timeline> tl)
+{
+    if (!m_tl || !tl || tl->bars.isEmpty()) {
+        setTimeline(std::move(tl));
+        return;
+    }
+    m_tl = std::move(tl);
+    const int count = int(m_tl->bars.size());
+    if (m_bar > count || (m_bar == count && m_playing)) {
+        m_bar = count - 1;
+        m_step = 0;
+    }
+    if (m_bar < count && m_step >= m_tl->bars[m_bar].stepCount())
+        m_step = 0;
+    m_curChord = -2;
+}
+
 void Sequencer::play()
 {
     if (!m_tl || m_playing)

@@ -2,6 +2,7 @@
 
 #include <QWidget>
 
+class QCheckBox;
 class QLabel;
 class QPlainTextEdit;
 class QTimer;
@@ -19,6 +20,8 @@ public:
     bool isModified() const;
     // Called when the file changed on disk (e.g. edited in another program).
     void fileChangedOnDisk(const QString &path);
+    // Puts the cursor on a line of the file, selecting the lyrics if it is a <line>.
+    void goToLine(int line);
 
 public slots:
     bool save();
@@ -26,6 +29,8 @@ public slots:
 
 signals:
     void saved(const QString &path);
+    // Live mode: the text changed and is valid, so it can be played without saving.
+    void liveEdit(const QString &path, const QByteArray &xml);
 
 private slots:
     void validate();
@@ -39,5 +44,6 @@ private:
     QPlainTextEdit *m_edit;
     QLabel *m_fileLabel;
     QLabel *m_status;
+    QCheckBox *m_live;
     QTimer *m_timer;
 };

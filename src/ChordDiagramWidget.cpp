@@ -56,6 +56,9 @@ void ChordDiagramWidget::paintEvent(QPaintEvent *)
     double y = r.top();
     if (!m_caption.isEmpty()) {
         f.setPointSizeF(std::max(8.0, r.height() * 0.04));
+        // Shrink the caption until it fits the width.
+        while (f.pointSizeF() > 6.0 && QFontMetricsF(f).horizontalAdvance(m_caption) > r.width())
+            f.setPointSizeF(f.pointSizeF() - 0.5);
         p.setFont(f);
         p.setPen(fg);
         p.drawText(QRectF(r.left(), y, r.width(), r.height() * 0.07), Qt::AlignCenter, m_caption);

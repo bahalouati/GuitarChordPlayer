@@ -7,6 +7,7 @@
 #include <memory>
 
 class ChordDiagramWidget;
+class LyricsWidget;
 class PatternWidget;
 class SongEditor;
 class QDockWidget;
@@ -51,11 +52,14 @@ private slots:
 
 private:
     bool loadSongFileImpl(const QString &path, bool keepPosition);
+    void applySong(std::shared_ptr<Song> song, std::shared_ptr<Timeline> tl, bool keepPosition);
+    void applyLiveEdit(const QString &path, const QByteArray &xml);
     void buildUi();
     void buildMenus();
     QString examplesDir() const;
     QString userSongsDir() const;
     QString uniqueSongPath(const QString &title) const;
+    void saveNewSong(const QString &title, const QString &xml);
     void importSong(const QString &path);
     void watchPaths();
     void showError(const QString &message);
@@ -80,6 +84,7 @@ private:
     ChordDiagramWidget *m_current = nullptr;
     ChordDiagramWidget *m_next = nullptr;
     PatternWidget *m_pattern = nullptr;
+    LyricsWidget *m_lyrics = nullptr;
     QPushButton *m_playBtn = nullptr;
     QSlider *m_tempo = nullptr;
     QLabel *m_tempoLabel = nullptr;

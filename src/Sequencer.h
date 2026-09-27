@@ -30,6 +30,8 @@ public:
     void setSampleRate(double sr);
     double sampleRate() const { return m_sr; }
     void setTimeline(std::shared_ptr<const Timeline> tl);
+    // Swaps in an edited version of the song without stopping or moving the playhead.
+    void replaceTimeline(std::shared_ptr<const Timeline> tl);
 
     void play();
     void pause();

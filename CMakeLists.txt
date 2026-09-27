@@ -17,11 +17,19 @@ qt_add_executable(GuitarChordPlayer WIN32
     src/WavWriter.h src/WavWriter.cpp
     src/ChordDiagramWidget.h src/ChordDiagramWidget.cpp
     src/PatternWidget.h src/PatternWidget.cpp
+    src/LyricsWidget.h src/LyricsWidget.cpp
     src/MainWindow.h src/MainWindow.cpp
     src/ChordSheet.h src/ChordSheet.cpp
     src/NewSongDialog.h src/NewSongDialog.cpp
     src/SongEditor.h src/SongEditor.cpp
     src/ChordFinderDialog.h src/ChordFinderDialog.cpp
+    src/LlmPrompt.h src/LlmPrompt.cpp
+)
+
+# The LLM prompt is kept in docs/ and embedded so the app can copy it to the clipboard.
+qt_add_resources(GuitarChordPlayer docs
+    PREFIX "/"
+    FILES docs/LLM_PROMPT.md
 )
 
 target_link_libraries(GuitarChordPlayer PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Multimedia)

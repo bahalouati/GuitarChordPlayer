@@ -119,6 +119,12 @@ void AudioEngine::setTimeline(std::shared_ptr<const Timeline> tl)
     m_seq.setTimeline(std::move(tl));
 }
 
+void AudioEngine::replaceTimeline(std::shared_ptr<const Timeline> tl)
+{
+    QMutexLocker l(&m_mutex);
+    m_seq.replaceTimeline(std::move(tl));
+}
+
 void AudioEngine::play()
 {
     QMutexLocker l(&m_mutex);

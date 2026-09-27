@@ -2,6 +2,7 @@
 
 #include "Song.h"
 
+#include <QCheckBox>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -98,8 +99,17 @@ SongEditor::SongEditor(QWidget *parent) : QWidget(parent)
     });
     insert->setMenu(menu);
 
+    menu->addAction(tr("Lyric line"), this, [this] {
+        insertSnippet(QStringLiteral("<line chords=\"G | D | Em | C\">Words for bar one | bar two | three | four</line>\n"));
+    });
+
+    m_live = new QCheckBox(tr("Live"));
+    m_live->setChecked(true);
+    m_live->setToolTip(tr("Play your changes as you type, without saving (Ctrl+S saves them)"));
+
     auto *top = new QHBoxLayout;
     top->addWidget(m_fileLabel, 1);
+    top->addWidget(m_live);
     top->addWidget(insert);
     top->addWidget(revertBtn);
     top->addWidget(saveBtn);
@@ -178,6 +188,26 @@ void SongEditor::fileChangedOnDisk(const QString &path)
     }
 }
 
+void SongEditor::goToLine(int line)
+{
+    const QTextBlock block = m_edit->document()->findBlockByNumber(line - 1);
+    if (!block.isValid())
+        return;
+    QTextCursor c(block);
+    // Select the lyrics between <line ...> and </line> when they are on this line.
+    const QString text = block.text();
+    const int open = int(text.indexOf(QLatin1String("<line")));
+    const int start = open >= 0 ? int(text.indexOf(QLatin1Char('>'), open)) : -1;
+    const int end = int(text.indexOf(QLatin1String("</line>")));
+    if (start >= 0 && end > start) {
+        c.setPosition(block.position() + start + 1);
+        c.setPosition(block.position() + end, QTextCursor::KeepAnchor);
+    }
+    m_edit->setTextCursor(c);
+    m_edit->centerCursor();
+    m_edit->setFocus();
+}
+
 void SongEditor::updateTitle()
 {
     m_fileLabel->setText(m_path.isEmpty() ? tr("No song open")
@@ -192,7 +222,14 @@ void SongEditor::validate()
     auto song = loadSongFromData(m_edit->toPlainText().toUtf8(), m_path, &err);
     if (song && buildTimeline(song, &err)) {
         m_status->setStyleSheet(QStringLiteral("color: #2e8b57;"));
-        m_status->setText(isModified() ? tr("✓ Looks good - press Ctrl+S to save and hear it") : tr("✓ Looks good"));
+        if (!isModified())
+            m_status->setText(tr("✓ Looks good"));
+        else if (m_live->isChecked())
+            m_status->setText(tr("✓ Playing your changes live - press Ctrl+S to save them"));
+        else
+            m_status->setText(tr("✓ Looks good - press Ctrl+S to save and hear it"));
+        if (isModified() && m_live->isChecked())
+            emit liveEdit(m_path, m_edit->toPlainText().toUtf8());
     } else {
         m_status->setStyleSheet(QStringLiteral("color: #d03030;"));
         m_status->setText(err);

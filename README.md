@@ -11,6 +11,8 @@ While a song plays you see:
 - **the next chord**, plus how many beats until the change.
 - **the strum/pick pattern** for this bar and the next (`↓ ↑ ✕ B 3 2 1 ...`) with the beat count
   (`1 & 2 & ...`) and a moving highlight.
+- the **lyrics**, if the song has them: the current line with the chords above the words and the current bar
+  highlighted, plus the next line. During an intro the first line is shown early, with the number of bars left before singing starts.
 - the **section** you are in (Intro, Verse 1/2, Chorus ...) and the bar number.
 
 Practice tools: tempo slider (25-150 %, the pitch stays the same), loop the current section, metronome,
@@ -47,9 +49,25 @@ C | G | D | Em
 Press *Create & Play*. The app saves the song as an XML file in **Documents\Guitar Chord Player\My Songs**
 and starts playing it.
 
+To add lyrics, put a line of words directly under the chords it goes with, with `|` where each new bar starts:
+
+```
+[Verse 1] folk
+G | D | Em | C
+Here are the | words for the | first | line
+```
+
+**Let an LLM write it:** click **Copy LLM prompt** in the New Song dialog (or *Help → Copy LLM prompt*),
+paste it into ChatGPT, Claude, Gemini or another LLM, and fill in the song name. Add lyrics you have and it lines them
+up with the chords. Copy the whole answer and click **Paste LLM answer** (or *File → New song from LLM answer*,
+Ctrl+Shift+V). The song is saved and starts playing. The prompt is also in
+[`docs/LLM_PROMPT.md`](docs/LLM_PROMPT.md).
+
 **Changing a song: Edit song (Ctrl+E)** opens the song's XML in a built-in editor. It checks what you type
-and shows problems in red. **Ctrl+S** saves and you hear the change straight away. *Insert* adds snippets
-(section, bars, pattern, chord fingering). If a song file has a mistake, the app says what's wrong and opens
+and shows problems in red. With **Live** ticked (the default), every valid change plays straight away
+without stopping or losing your place, so you can fix a chord or a lyric while the song keeps playing.
+**Ctrl+S** saves. **Click a lyric line** in the player to jump to it in the editor with its words selected.
+*Insert* adds snippets (section, bars, lyric line, pattern, chord fingering). If a song file has a mistake, the app says what's wrong and opens
 it in the editor.
 
 **Other ways to add songs:**
@@ -97,6 +115,7 @@ add `<chord name="..." frets="x32010"/>` to the song.
 | Ctrl+E | Show / hide the song editor |
 | Ctrl+S | Save and replay (in the editor) |
 | Ctrl+K | Chord finder |
+| Ctrl+Shift+V | New song from an LLM answer on the clipboard |
 
 ## Building on Windows (MSVC)
 
@@ -219,6 +238,22 @@ section only.
 - `%` repeats the previous chord. `N.C.` means no chord (strums are silent, picks are skipped).
 - `repeat="2"` on `<bars>` repeats those bars. `<bar>C G</bar>` adds exactly one bar.
 
+### Lyrics: `<line>`
+
+Use `<line>` instead of `<bars>` for bars that have words:
+
+```xml
+<section name="Verse 1" pattern="waltz">
+  <line chords="G | G | C | G">A-mazing | grace, how | sweet the | sound that</line>
+  <line chords="G | G | D | D">saved a | wretch like | me. | I</line>
+</section>
+```
+
+`chords` uses the same syntax as `<bars>`. The lyrics are split with `|`, one piece per bar: the words sung
+while that bar plays (a piece can be empty). Without any `|`, the whole line is shown with a progress bar
+under it. Verses with different words need their own sections (`Verse 1`, `Verse 2`). *Amazing Grace* in the
+examples shows how it works.
+
 ### `<arrangement>`
 
 The order the sections are played in: `<play section="Chorus" repeat="2"/>`. If you leave it out, the
@@ -230,7 +265,7 @@ finger would.
 ## Included songs
 
 - *House of the Rising Sun* (traditional): 6/8 arpeggios
-- *Amazing Grace* (traditional): 3/4 waltz strum and picking
+- *Amazing Grace* (traditional): 3/4 waltz strum and picking, with lyrics
 - *Pop Practice Song*: five sections with different strums, sixteenths, accents, chucks and tempo changes
 - *Travis Picking Study*: alternating-bass fingerpicking
 
@@ -241,6 +276,8 @@ finger would.
 | `src/Song.*` | XML parsing, validation, built-in patterns, flattening into a playable `Timeline` |
 | `src/ChordSheet.*` | Plain-text chord sheet → song XML (New Song dialog) |
 | `src/NewSongDialog.*`, `src/SongEditor.*`, `src/ChordFinderDialog.*` | Song creation and editing tools |
+| `src/LyricsWidget.*` | Lyrics view |
+| `src/LlmPrompt.*`, `docs/LLM_PROMPT.md` | The LLM prompt (embedded in the app) and reading LLM answers |
 | `src/ChordLibrary.*` | Built-in chord shapes, name normalisation, generated barre chords |
 | `src/GuitarSynth.*` | Karplus-Strong strings, body resonance, metronome click |
 | `src/Sequencer.*` | Sample-accurate playback: patterns → strums/picks, loop, count-in, position history |

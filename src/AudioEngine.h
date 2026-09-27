@@ -41,6 +41,7 @@ public:
     bool start(QString *error);
 
     void setTimeline(std::shared_ptr<const Timeline> tl);
+    void replaceTimeline(std::shared_ptr<const Timeline> tl);
     void play();
     void pause();
     void stop();

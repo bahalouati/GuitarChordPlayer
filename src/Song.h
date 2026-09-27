@@ -32,6 +32,17 @@ struct BarDef
 {
     struct Slot { QString chord; double beats = 0.0; }; // beats <= 0: split the rest evenly
     QVector<Slot> parts;
+    QString lyric;        // words sung during this bar (from a <line>)
+    int lyricLine = -1;   // index into Section::lines, -1 = no lyrics
+};
+
+// A <line> of lyrics covering some bars of a section.
+struct LyricLineDef
+{
+    int firstBar = 0;     // within the section
+    int barCount = 0;
+    int sourceLine = 0;   // line number in the XML file, for jumping to it in the editor
+    bool split = false;   // lyrics divided per bar with '|'
 };
 
 struct Section
@@ -41,6 +52,7 @@ struct Section
     double bpm = 0.0;     // 0 = use the song tempo
     int beatsPerBar = 0;  // 0 = use the song meter
     QVector<BarDef> bars;
+    QVector<LyricLineDef> lines;
 };
 
 struct ArrangementItem
@@ -102,6 +114,8 @@ struct Timeline
         int subdivision = 2;
         int pattern = -1;      // index into patterns
         QVector<int> chordAtStep; // index into chords, -1 = no chord
+        int lyricLine = -1;       // index into lyricLines, -1 = none
+        QString lyric;
 
         int stepCount() const { return beatsPerBar * subdivision; }
     };
@@ -115,7 +129,16 @@ struct Timeline
         int barCount = 0;
     };
 
+    struct LyricLine
+    {
+        int firstBar = 0;
+        int barCount = 0;
+        int sourceLine = 0;
+        bool split = false;
+    };
+
     std::shared_ptr<const Song> song;
+    QVector<LyricLine> lyricLines;
     QVector<ChordShape> chords;  // every chord used, resolved
     QVector<Pattern> patterns;   // every pattern used, resolved
     QVector<Bar> bars;

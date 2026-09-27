@@ -325,6 +325,50 @@ std::shared_ptr<Song> loadSongFromData(const QByteArray &data, const QString &pa
             }
             for (int r = 0; r < qMax(1, repeat); ++r)
                 currentSection->bars += bars;
+        } else if (name == QLatin1String("line")) {
+            // <line chords="G | D | Em | C">Almost | heaven, West | Vir- | ginia</line>
+            if (!currentSection) {
+                fail(QStringLiteral("<line> must be inside a <section>"));
+                break;
+            }
+            const int sourceLine = int(xml.lineNumber());
+            const QString chords = a.value(QLatin1String("chords")).toString();
+            const int repeat = a.hasAttribute(QLatin1String("repeat"))
+                    ? a.value(QLatin1String("repeat")).toInt() : 1;
+            const QString text = xml.readElementText(QXmlStreamReader::SkipChildElements);
+            QVector<BarDef> bars;
+            QString berr;
+            if (chords.trimmed().isEmpty()) {
+                fail(QStringLiteral("<line> needs its chords, e.g. <line chords=\"G | D\">lyrics</line>"));
+                break;
+            }
+            if (!parseBars(chords, &bars, &berr)) {
+                fail(berr);
+                break;
+            }
+            QStringList segments = text.split(QLatin1Char('|'));
+            for (QString &seg : segments)
+                seg = seg.simplified();
+            // More lyric pieces than bars: the extra words go with the last bar.
+            while (segments.size() > bars.size() && segments.size() > 1) {
+                const QString last = segments.takeLast();
+                segments.last() += QLatin1Char(' ') + last;
+                segments.last() = segments.last().simplified();
+            }
+            for (int r = 0; r < qMax(1, repeat); ++r) {
+                LyricLineDef line;
+                line.firstBar = currentSection->bars.size();
+                line.barCount = bars.size();
+                line.sourceLine = sourceLine;
+                line.split = segments.size() > 1;
+                for (int b = 0; b < bars.size(); ++b) {
+                    BarDef bar = bars[b];
+                    bar.lyric = b < segments.size() ? segments[b] : QString();
+                    bar.lyricLine = currentSection->lines.size();
+                    currentSection->bars << bar;
+                }
+                currentSection->lines << line;
+            }
         } else if (name == QLatin1String("play")) {
             ArrangementItem it;
             it.section = a.value(QLatin1String("section")).toString();
@@ -337,7 +381,7 @@ std::shared_ptr<Song> loadSongFromData(const QByteArray &data, const QString &pa
         } else if (name != QLatin1String("chords") && name != QLatin1String("patterns")
                    && name != QLatin1String("sections") && name != QLatin1String("arrangement")) {
             fail(QStringLiteral("Unknown tag <%1>. Allowed tags: song, chords, chord, patterns, pattern, "
-                                "sections, section, bars, bar, arrangement, play").arg(name.toString()));
+                                "sections, section, bars, bar, line, arrangement, play").arg(name.toString()));
         }
     }
 
@@ -440,6 +484,9 @@ std::shared_ptr<Timeline> buildTimeline(std::shared_ptr<const Song> song, QStrin
             play.barCount = sec.bars.size();
             const int playIndex = tl->plays.size();
             tl->plays << play;
+            const int lineBase = tl->lyricLines.size();
+            for (const LyricLineDef &def : sec.lines)
+                tl->lyricLines << Timeline::LyricLine{play.firstBar + def.firstBar, def.barCount, def.sourceLine, def.split};
 
             for (int b = 0; b < sec.bars.size(); ++b) {
                 Timeline::Bar bar;
@@ -449,6 +496,10 @@ std::shared_ptr<Timeline> buildTimeline(std::shared_ptr<const Song> song, QStrin
                 bar.beatsPerBar = sec.beatsPerBar > 0 ? sec.beatsPerBar : song->beatsPerBar;
                 bar.subdivision = pat.subdivision;
                 bar.pattern = pi;
+                if (sec.bars[b].lyricLine >= 0) {
+                    bar.lyricLine = lineBase + sec.bars[b].lyricLine;
+                    bar.lyric = sec.bars[b].lyric;
+                }
                 const int steps = bar.stepCount();
                 bar.chordAtStep.fill(-1, steps);
 
