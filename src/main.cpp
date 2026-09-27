@@ -9,6 +9,7 @@
 #include <QFileInfo>
 
 #include <QApplication>
+#include <cmath>
 #include <QIcon>
 #include <QSettings>
 #include <QTextStream>
@@ -37,6 +38,23 @@ int main(int argc, char *argv[])
             err << "Error: " << error << Qt::endl;
             return 1;
         }
+        return 0;
+    }
+
+    // Decoding check: GuitarChordPlayer --decode song.mp3  (prints length and level)
+    if (argc == 3 && QString::fromLocal8Bit(argv[1]) == QLatin1String("--decode")) {
+        QCoreApplication app(argc, argv);
+        QTextStream out(stdout);
+        QString error;
+        auto clip = decodeAudioFile(QString::fromLocal8Bit(argv[2]), 44100, &error);
+        if (!clip) {
+            out << "Error: " << error << Qt::endl;
+            return 1;
+        }
+        double sum = 0;
+        for (float v : clip->left)
+            sum += double(v) * v;
+        out << "ok " << clip->seconds() << " s, rms " << std::sqrt(sum / std::max<size_t>(1, clip->frames())) << Qt::endl;
         return 0;
     }
 
