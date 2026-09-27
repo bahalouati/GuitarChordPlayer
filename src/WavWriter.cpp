@@ -31,11 +31,12 @@ bool writeWav(const QString &path, const std::vector<float> &left, const std::ve
 #include "Sequencer.h"
 
 bool exportSongToWav(std::shared_ptr<const Timeline> tl, const QString &path, double tempoScale,
-                     QString *error, std::shared_ptr<const AudioClip> audio, double audioOffset)
+                     QString *error, std::shared_ptr<const AudioClip> audio, double audioOffset, GuitarTone tone)
 {
     const int sr = audio ? audio->sampleRate : 44100;
     Sequencer seq;
     seq.setSampleRate(sr);
+    seq.setTone(tone);
     seq.setTimeline(std::move(tl));
     if (audio)
         seq.setAudio(audio, audioOffset);

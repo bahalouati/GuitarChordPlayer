@@ -54,6 +54,8 @@ public:
     void setCountIn(bool on);
     void setVolume(float v);
     void previewChord(const ChordShape &chord);
+    void setTone(GuitarTone tone);
+    GuitarTone tone() const { return m_tone; }
 
     // Recording played along (see Sequencer::setAudio).
     int sampleRate() const;
@@ -72,4 +74,5 @@ private:
     QAudioFormat m_format;
     QAudioSink *m_sink = nullptr;
     SynthDevice *m_device = nullptr;
+    GuitarTone m_tone = GuitarTone::Acoustic;
 };

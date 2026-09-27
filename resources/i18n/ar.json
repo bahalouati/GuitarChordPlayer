@@ -238,5 +238,9 @@
  "Download failed:\n%1": "فشل التنزيل:\n%1",
  "Could not save the download to %1": "تعذّر حفظ التنزيل في %1",
  "Could not write the update script.": "تعذّر كتابة سكربت التحديث.",
- "Could not start the updater.": "تعذّر تشغيل برنامج التحديث."
+ "Could not start the updater.": "تعذّر تشغيل برنامج التحديث.",
+ "Guitar &sound": "&صوت الغيتار",
+ "Acoustic (steel strings)": "أكوستيك (أوتار معدنية)",
+ "Classical (nylon strings)": "كلاسيكي (أوتار نايلون)",
+ "Electric (clean)": "كهربائي (نظيف)"
 }

@@ -66,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_engine = new AudioEngine(this);
     QString err;
     m_audioOk = m_engine->start(&err);
+    m_engine->setTone(GuitarTone(std::clamp(QSettings().value(QStringLiteral("guitarTone"), 0).toInt(), 0, 2)));
 
     m_updater = new Updater(this);
     buildUi();
@@ -464,6 +465,36 @@ void MainWindow::buildMenus()
                      &MainWindow::addLyrics);
 
     QMenu *settings = menuBar()->addMenu(tr("&Settings"));
+    QMenu *sound = settings->addMenu(tr("Guitar &sound"));
+    auto *soundGroup = new QActionGroup(this);
+    const int currentTone = QSettings().value(QStringLiteral("guitarTone"), 0).toInt();
+    const QList<QPair<QString, GuitarTone>> tones = {
+        {tr("Acoustic (steel strings)"), GuitarTone::Acoustic},
+        {tr("Classical (nylon strings)"), GuitarTone::Nylon},
+        {tr("Electric (clean)"), GuitarTone::Electric},
+    };
+    for (const auto &t : tones) {
+        QAction *a = sound->addAction(t.first);
+        a->setCheckable(true);
+        a->setChecked(int(t.second) == currentTone);
+        soundGroup->addAction(a);
+        const GuitarTone value = t.second;
+        connect(a, &QAction::triggered, this, [this, value] {
+            m_engine->setTone(value);
+            QSettings().setValue(QStringLiteral("guitarTone"), int(value));
+            // Let the player hear the new sound right away.
+            if (m_view && !m_engine->isPlaying()) {
+                const Sequencer::Snapshot s = m_engine->snapshot();
+                const auto &bars = m_view->bars;
+                if (!bars.isEmpty()) {
+                    const int bar = std::clamp(s.bar, 0, int(bars.size()) - 1);
+                    const int c = bars[bar].chordAtStep.value(0, -1);
+                    if (c >= 0)
+                        m_engine->previewChord(m_view->chords[c]);
+                }
+            }
+        });
+    }
     buildLanguageMenu(settings->addMenu(tr("&Language")));
     QAction *detailed = settings->addAction(tr("Recognise 7th, sus, dim and aug chords in recordings"));
     detailed->setCheckable(true);
@@ -986,7 +1017,8 @@ void MainWindow::exportWav()
         return;
     QApplication::setOverrideCursor(Qt::WaitCursor);
     QString err;
-    const bool ok = exportSongToWav(m_view, path, m_tempo->value() / 100.0, &err, m_clip, m_song->audioOffset);
+    const bool ok = exportSongToWav(m_view, path, m_tempo->value() / 100.0, &err, m_clip, m_song->audioOffset,
+                                    m_engine->tone());
     QApplication::restoreOverrideCursor();
     if (ok)
         m_status->setText(tr("Exported %1").arg(path));
