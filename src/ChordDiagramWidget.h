@@ -40,6 +40,10 @@ public:
     void setCaption(const QString &caption);  // small text above, e.g. "Now" / "Next"
     void setGlow(const std::array<float, 6> &glow);
     void setDimmed(bool dimmed);
+    // Draw on a rounded card; highlighted = an outline in the "playing now" colour.
+    void setCard(bool card, bool highlighted = false);
+    // Where the card sits in the widget (left, centre or right).
+    void setCardAlignment(Qt::Alignment a) { m_cardAlign = a; update(); }
 
     QSize sizeHint() const override { return {260, 340}; }
     QSize minimumSizeHint() const override { return {120, 160}; }
@@ -52,4 +56,7 @@ private:
     QString m_caption;
     std::array<float, 6> m_glow{};
     bool m_dimmed = false;
+    bool m_card = false;
+    bool m_highlighted = false;
+    Qt::Alignment m_cardAlign = Qt::AlignHCenter;
 };

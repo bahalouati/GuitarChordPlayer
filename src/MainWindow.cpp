@@ -14,10 +14,12 @@
 #include "Updater.h"
 #include "WavWriter.h"
 #include "PdfExport.h"
+#include "StageWidgets.h"
 
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QAction>
+#include <functional>
 #include <QActionGroup>
 #include <QApplication>
 #include <QCheckBox>
@@ -161,7 +163,10 @@ MainWindow::~MainWindow()
     s.setValue(QStringLiteral("recordingVolume"), m_recordingVolume->value());
     s.setValue(QStringLiteral("metronome"), m_metronome->isChecked());
     s.setValue(QStringLiteral("countIn"), m_countIn->isChecked());
-    s.setValue(QStringLiteral("geometry"), saveGeometry());
+    // In video mode, remember the normal window, not the video one.
+    if (m_videoMode)
+        m_editorDock->setVisible(m_editorWasVisible);
+    s.setValue(QStringLiteral("geometry"), m_videoMode ? m_savedGeometry : saveGeometry());
     s.setValue(QStringLiteral("windowState"), saveState());
     if (m_song)
         s.setValue(QStringLiteral("lastSong"), m_song->filePath);
@@ -173,6 +178,7 @@ void MainWindow::buildUi()
 
     // Left: song library and arrangement
     auto *left = new QWidget;
+    m_left = left;
     auto *ll = new QVBoxLayout(left);
     auto *newBtn = new QPushButton(tr("+ New song"));
     newBtn->setFocusPolicy(Qt::NoFocus);
@@ -203,42 +209,69 @@ void MainWindow::buildUi()
         jumpToPlay(m_sectionList->row(it));
     });
 
-    // Right: live view
+    // Right: the live view ("stage", also what goes into recorded videos) above the controls.
     auto *right = new QWidget;
-    auto *rl = new QVBoxLayout(right);
+    auto *rightLayout = new QVBoxLayout(right);
+    rightLayout->setContentsMargins(0, 0, 0, 0);
+    rightLayout->setSpacing(0);
+    m_stage = new StageWidget;
+    rightLayout->addWidget(m_stage, 1);
+    auto *rl = new QVBoxLayout(m_stage);
+    rl->setContentsMargins(22, 16, 22, 12);
+    rl->setSpacing(8);
     m_title = new QLabel;
     QFont tf = m_title->font();
-    tf.setPointSizeF(tf.pointSizeF() * 1.8);
+    tf.setPointSizeF(tf.pointSizeF() * 2.1);
     tf.setBold(true);
     m_title->setFont(tf);
     m_info = new QLabel;
     m_section = new QLabel;
     QFont sf = m_section->font();
-    sf.setPointSizeF(sf.pointSizeF() * 1.5);
+    sf.setPointSizeF(sf.pointSizeF() * 1.45);
+    sf.setBold(true);
     m_section->setFont(sf);
     m_section->setStyleSheet(QStringLiteral("color: rgb(255,140,40);"));
+    m_section->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     m_banner = new QLabel;
     m_banner->setWordWrap(true);
     m_banner->setTextInteractionFlags(Qt::TextSelectableByMouse);
     m_banner->setStyleSheet(QStringLiteral("background: #d03030; color: white; padding: 8px; border-radius: 4px;"));
     m_banner->hide();
     rl->addWidget(m_banner);
-    rl->addWidget(m_title);
-    rl->addWidget(m_info);
-    rl->addWidget(m_section);
+    auto *head = new QHBoxLayout;
+    auto *titles = new QVBoxLayout;
+    titles->setSpacing(0);
+    titles->addWidget(m_title);
+    titles->addWidget(m_info);
+    head->addLayout(titles, 1);
+    head->addWidget(m_section, 0, Qt::AlignBottom);
+    rl->addLayout(head);
+    m_progress = new SongProgressWidget;
+    connect(m_progress, &SongProgressWidget::playClicked, this, [this](int play) { jumpToPlay(play); });
+    rl->addWidget(m_progress);
 
     auto *chords = new QHBoxLayout;
+    chords->setSpacing(18);
     m_current = new ChordDiagramWidget;
     m_current->setCaption(tr("Now"));
+    m_current->setCard(true, true);
     m_next = new ChordDiagramWidget;
     m_next->setCaption(tr("Next"));
     m_next->setDimmed(true);
-    chords->addStretch(1);
+    m_next->setCard(true);
+    // The two cards meet in the middle (the widget is laid out left to right in every language).
+    m_current->setCardAlignment(Qt::AlignRight);
+    m_next->setCardAlignment(Qt::AlignLeft);
+    auto *chordRow = new QWidget;
+    chordRow->setLayoutDirection(Qt::LeftToRight);
+    chordRow->setLayout(chords);
+    chords->setContentsMargins(0, 0, 0, 0);
     chords->addWidget(m_current, 3);
-    chords->addSpacing(20);
     chords->addWidget(m_next, 2);
-    chords->addStretch(1);
-    rl->addLayout(chords, 5);
+    rl->addWidget(chordRow, 5);
+
+    m_strip = new ChordStripWidget;
+    rl->addWidget(m_strip, 3);
 
     m_lyrics = new LyricsWidget;
     m_lyrics->hide();
@@ -253,6 +286,13 @@ void MainWindow::buildUi()
 
     m_pattern = new PatternWidget;
     rl->addWidget(m_pattern, 2);
+
+    setStageTheme(Stage::Theme(QSettings().value(QStringLiteral("stageTheme"), 0).toInt()));
+
+    m_controls = new QWidget;
+    auto *cl = new QVBoxLayout(m_controls);
+    cl->setContentsMargins(9, 6, 9, 4);
+    rightLayout->addWidget(m_controls);
 
     // Transport
     auto *tr1 = new QHBoxLayout;
@@ -390,8 +430,8 @@ void MainWindow::buildUi()
         m_song->audioOffset = ms / 1000.0;
         m_offsetSave->start();
     });
-    rl->addLayout(tr1);
-    rl->addLayout(tr2);
+    cl->addLayout(tr1);
+    cl->addLayout(tr2);
 
     splitter->addWidget(right);
     splitter->setStretchFactor(0, 1);
@@ -463,6 +503,49 @@ void MainWindow::buildMenus()
     play->addAction(tr("Toggle loop section"), QKeySequence(Qt::Key_L), m_loop, &QCheckBox::toggle);
     play->addAction(tr("Toggle metronome"), QKeySequence(Qt::Key_M), m_metronome, &QCheckBox::toggle);
 
+    // View: the stage as it looks in videos.
+    QMenu *view = menuBar()->addMenu(tr("&View"));
+    m_videoAction = view->addAction(tr("&Video mode (full screen, stage only)"));
+    m_videoAction->setShortcut(QKeySequence(Qt::Key_F11));
+    m_videoAction->setCheckable(true);
+    connect(m_videoAction, &QAction::triggered, this, [this] { setVideoMode(!m_videoMode, true); });
+    QMenu *sizes = view->addMenu(tr("Video &window (stage only)"));
+    for (const QSize &sz : {QSize(1280, 720), QSize(1920, 1080), QSize(1080, 1080)}) {
+        const QString label = sz.width() == sz.height() ? tr("%1 × %2 (square)").arg(sz.width()).arg(sz.height())
+                                                        : tr("%1 × %2").arg(sz.width()).arg(sz.height());
+        sizes->addAction(label, this, [this, sz] {
+            setVideoMode(true, false);
+            // Make the stage itself exactly this size (the window frame is extra), once the
+            // hidden panels have given their space back.
+            QTimer::singleShot(0, this, [this, sz] {
+                resize(sz + (size() - m_stage->size()));
+            });
+        });
+    }
+    sizes->addSeparator();
+    sizes->addAction(tr("Back to the normal window"), this, [this] { setVideoMode(false, false); });
+    QMenu *colours = view->addMenu(tr("Stage &colours"));
+    auto *themeGroup = new QActionGroup(this);
+    for (const auto &t : {qMakePair(tr("Dark"), Stage::Theme::Dark), qMakePair(tr("Light"), Stage::Theme::Light)}) {
+        QAction *a = colours->addAction(t.first);
+        a->setCheckable(true);
+        a->setChecked(m_stage->theme() == t.second);
+        themeGroup->addAction(a);
+        const Stage::Theme theme = t.second;
+        connect(a, &QAction::triggered, this, [this, theme] {
+            QSettings().setValue(QStringLiteral("stageTheme"), int(theme));
+            setStageTheme(theme);
+        });
+    }
+    QAction *strip = view->addAction(tr("Show all the chord shapes of the song"));
+    strip->setCheckable(true);
+    strip->setChecked(QSettings().value(QStringLiteral("showChordStrip"), true).toBool());
+    m_strip->setVisible(strip->isChecked());
+    connect(strip, &QAction::toggled, this, [this](bool on) {
+        QSettings().setValue(QStringLiteral("showChordStrip"), on);
+        m_strip->setVisible(on);
+    });
+
     QMenu *tools = menuBar()->addMenu(tr("&Tools"));
     tools->addAction(tr("&Chord finder..."), QKeySequence(Qt::CTRL | Qt::Key_K), this, &MainWindow::showChordFinder);
     tools->addAction(tr("Add &lyrics to this song..."), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_L), this,
@@ -530,6 +613,19 @@ void MainWindow::buildMenus()
                               "<a href=\"https://github.com/%2/releases\">github.com/%2</a>.")
                            .arg(build, Updater::repository()));
     });
+
+    // Menu shortcuts also work while the menu bar is hidden (video mode).
+    std::function<void(QMenu *)> addAll = [&](QMenu *m) {
+        for (QAction *a : m->actions()) {
+            if (a->menu())
+                addAll(a->menu());
+            else if (!a->shortcut().isEmpty())
+                addAction(a);
+        }
+    };
+    for (QAction *a : menuBar()->actions())
+        if (a->menu())
+            addAll(a->menu());
 }
 
 QString MainWindow::userSongsDir() const
@@ -814,12 +910,14 @@ void MainWindow::applySong(std::shared_ptr<Song> song, std::shared_ptr<Timeline>
     else
         m_engine->setTimeline(m_view);
     m_pattern->setTimeline(m_view);
+    m_strip->setChords(chordsInSong(*m_view));
+    m_progress->setTimeline(m_view);
     applyRecording(!keep);
     m_lyrics->setTimeline(m_view);
     m_lyrics->setVisible(!tl->lyricLines.isEmpty());
     applyTempo();
 
-    m_title->setText(song->title);
+    m_title->setText(uiDirectionMark() + song->title);
     updateInfo();
     setWindowTitle(tr("%1 - Guitar Chord Player").arg(song->title));
 
@@ -941,7 +1039,8 @@ void MainWindow::updateView()
         applyTempo();
 
     // Section header
-    QString header = play.section;
+    const QString mark = uiDirectionMark();
+    QString header = mark + play.section + mark;
     if (play.passes > 1)
         header += QStringLiteral(" (%1/%2)").arg(play.pass).arg(play.passes);
     header += tr("   ·   bar %1 of %2").arg(b.barInSection + 1).arg(play.barCount);
@@ -992,6 +1091,9 @@ void MainWindow::updateView()
         m_next->setCaption(tr("Next"));
     }
 
+    m_strip->setActive(chord >= 0 ? m_view->chords[chord].name : QString(),
+                       nextChord >= 0 ? m_view->chords[nextChord].name : QString());
+    m_progress->setPosition(bar, (step + s.stepFraction) / std::max(1, b.stepCount()));
     m_pattern->setPosition(bar, step, s.stepFraction, s.playing && !s.countIn);
     m_lyrics->setPosition(bar, (step + s.stepFraction) / std::max(1, b.stepCount()), s.playing && !s.countIn);
 }
@@ -1435,13 +1537,85 @@ void MainWindow::addLyrics()
                                 : tr("Lyrics added to a copy in My Songs: %1").arg(QFileInfo(target).fileName()));
 }
 
+// U+200E / U+200F: makes a line read in the interface's direction whatever script it starts with.
+QString MainWindow::uiDirectionMark()
+{
+    return QString(QChar(QGuiApplication::layoutDirection() == Qt::RightToLeft ? 0x200F : 0x200E));
+}
+
+void MainWindow::setVideoMode(bool on, bool fullScreen)
+{
+    // Only the stage: no song list, controls, menus or status bar. Keyboard shortcuts keep
+    // working (Space plays, F11 leaves).
+    if (on && !m_videoMode) {
+        m_videoMode = true;
+        m_savedGeometry = saveGeometry();
+        m_editorWasVisible = m_editorDock->isVisible();
+        m_left->hide();
+        m_controls->hide();
+        m_editorDock->hide();
+        menuBar()->hide();
+        statusBar()->hide();
+        m_stage->layout()->setContentsMargins(34, 24, 34, 20);
+    } else if (!on && m_videoMode) {
+        m_videoMode = false;
+        m_left->show();
+        m_controls->show();
+        menuBar()->show();
+        statusBar()->show();
+        m_editorDock->setVisible(m_editorWasVisible);
+        m_stage->layout()->setContentsMargins(22, 16, 22, 12);
+        if (isFullScreen())
+            showNormal();
+        restoreGeometry(m_savedGeometry);
+    }
+    if (on) {
+        if (fullScreen && !isFullScreen())
+            showFullScreen();
+        else if (!fullScreen && isFullScreen())
+            showNormal();
+        showVideoHint();
+    }
+    const QSignalBlocker block(m_videoAction);
+    m_videoAction->setChecked(on && fullScreen);
+}
+
+void MainWindow::showVideoHint()
+{
+    if (!m_videoHint) {
+        m_videoHint = new QLabel(m_stage);
+        m_videoHint->setStyleSheet(QStringLiteral("background: rgba(0,0,0,170); color: white; padding: 8px 14px; "
+                                                  "border-radius: 8px;"));
+        m_videoHintTimer = new QTimer(this);
+        m_videoHintTimer->setSingleShot(true);
+        connect(m_videoHintTimer, &QTimer::timeout, m_videoHint, &QWidget::hide);
+    }
+    m_videoHint->setText(tr("Video mode · Space plays · F11 goes back"));
+    m_videoHint->adjustSize();
+    m_videoHint->move(m_stage->width() - m_videoHint->width() - 16, 12);
+    m_videoHint->show();
+    m_videoHint->raise();
+    m_videoHintTimer->start(2500);
+}
+
+void MainWindow::setStageTheme(Stage::Theme theme)
+{
+    m_stage->setTheme(theme);
+    // The details under the title in a softer colour.
+    QPalette ip = m_stage->palette();
+    ip.setColor(QPalette::WindowText, theme == Stage::Theme::Dark ? QColor(160, 170, 186) : QColor(95, 102, 115));
+    m_info->setPalette(ip);
+}
+
 void MainWindow::updateInfo()
 {
     if (!m_song)
         return;
-    QString info = m_song->artist;
-    if (!info.isEmpty())
-        info += QStringLiteral("  ·  ");
+    // Direction marks keep the parts in order when the artist is written in another script.
+    const QString mark = uiDirectionMark();
+    QString info = mark + m_song->artist;
+    if (!m_song->artist.isEmpty())
+        info += mark + QStringLiteral("  ·  ") + mark;
     info += tr("%1 BPM  ·  %2 beats per bar").arg(m_song->bpm).arg(m_song->beatsPerBar);
     const int capo = m_view ? Arranger::capoOf(*m_view) : m_song->capo;
     if (capo != m_song->capo)
@@ -1469,6 +1643,8 @@ void MainWindow::rearrange()
     m_view = Arranger::arrange(m_timeline, as);
     m_engine->replaceTimeline(m_view);
     m_pattern->setTimeline(m_view);
+    m_strip->setChords(chordsInSong(*m_view));
+    m_progress->setTimeline(m_view);
     m_lyrics->setTimeline(m_view);
     updateInfo();
     updateView();

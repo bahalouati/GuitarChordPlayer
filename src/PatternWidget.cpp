@@ -61,7 +61,7 @@ void PatternWidget::drawBar(QPainter &p, const QRectF &r, int barIndex, bool cur
     if (!current)
         fg = pal.color(QPalette::Disabled, QPalette::WindowText);
     const QColor accent(255, 140, 40);
-    const QColor chordColor = current ? QColor(40, 120, 220) : fg;
+    const QColor chordColor = current ? pal.color(QPalette::Link) : fg;
 
     const double labelW = std::min(70.0, r.width() * 0.1);
     QFont f = font();

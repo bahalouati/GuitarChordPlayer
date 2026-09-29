@@ -67,7 +67,7 @@ double LyricsWidget::drawLine(QPainter &p, const QRectF &r, int line, int highli
     const double rowH = cm.height() + tm.height() + 4;
 
     const QColor fg = palette().color(dim ? QPalette::Disabled : QPalette::Normal, QPalette::WindowText);
-    const QColor chordColor = dim ? fg : QColor(40, 120, 220);
+    const QColor chordColor = dim ? fg : palette().color(QPalette::Link);
     const QColor hot(255, 140, 40);
 
     // Arabic, Hebrew, Persian...: lay the line out from the right.
