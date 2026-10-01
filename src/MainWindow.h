@@ -2,6 +2,7 @@
 
 #include "AudioEngine.h"
 #include "Song.h"
+#include "StageWidgets.h"
 
 #include <QMainWindow>
 #include <memory>
@@ -13,6 +14,7 @@ class SongEditor;
 class Updater;
 class QDockWidget;
 class QCheckBox;
+class QAction;
 class QComboBox;
 class QSpinBox;
 struct AudioClip;
@@ -64,6 +66,10 @@ private:
     void applySong(std::shared_ptr<Song> song, std::shared_ptr<Timeline> tl, bool keepPosition);
     void applyLiveEdit(const QString &path, const QByteArray &xml);
     void updateInfo();
+    void setStageTheme(Stage::Theme theme);
+    void setVideoMode(bool on, bool fullScreen);
+    void showVideoHint();
+    static QString uiDirectionMark();
     void buildLanguageMenu(QMenu *menu);
     void buildUi();
     void buildMenus();
@@ -105,6 +111,17 @@ private:
     ChordDiagramWidget *m_current = nullptr;
     ChordDiagramWidget *m_next = nullptr;
     PatternWidget *m_pattern = nullptr;
+    StageWidget *m_stage = nullptr;
+    ChordStripWidget *m_strip = nullptr;
+    SongProgressWidget *m_progress = nullptr;
+    QWidget *m_controls = nullptr;
+    QWidget *m_left = nullptr;
+    QAction *m_videoAction = nullptr;
+    QLabel *m_videoHint = nullptr;
+    QTimer *m_videoHintTimer = nullptr;
+    QByteArray m_savedGeometry;
+    bool m_videoMode = false;
+    bool m_editorWasVisible = false;
     LyricsWidget *m_lyrics = nullptr;
     QPushButton *m_playBtn = nullptr;
     QSlider *m_tempo = nullptr;

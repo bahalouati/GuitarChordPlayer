@@ -45,6 +45,13 @@ How often it is right (share of the song's time with the correct chord):
 Real songs vary, so fix any wrong chord by ear in the live editor while it plays. *File → Attach recording to this song* adds a recording to an existing song.
 It finds where bar 1 starts and offers the recording's tempo if it differs from the song's.
 
+**Recording videos.** The live view is a dark "stage" made to look good on screen and in videos: the song's title,
+a progress bar with its sections (click one to jump there), the chord playing **now** and the **next** one as large
+charts, a strip with **every chord shape the song uses** (the one playing is lit up in orange, the next one outlined),
+the lyrics and the strum pattern. *View → Video mode (F11)* shows only the stage, full screen. *View → Video window*
+makes the stage exactly 1280 × 720, 1920 × 1080 or 1080 × 1080 (square) for window capture in OBS or similar. Space
+still plays and pauses, F11 goes back. *View → Stage colours* switches between dark and light.
+
 **Print chord sheets (PDF).** *File → Export chord sheets as PDF (Ctrl+P)* prints one song or a whole songbook:
 tick the songs in the list. Each song starts on a new page with three boxes of chord charts, **N** the chords as
 written, **S** Simplify and **S+** Simplify+ (with the capo it picks), followed by every line of the song with the

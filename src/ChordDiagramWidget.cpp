@@ -42,17 +42,50 @@ void ChordDiagramWidget::setDimmed(bool dimmed)
     update();
 }
 
+void ChordDiagramWidget::setCard(bool card, bool highlighted)
+{
+    m_card = card;
+    m_highlighted = highlighted;
+    update();
+}
+
 void ChordDiagramWidget::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
     const QColor fg = m_dimmed ? palette().color(QPalette::Disabled, QPalette::WindowText)
                                : palette().color(QPalette::WindowText);
+    QRectF area = rect().adjusted(8, 4, -8, -4);
+    if (m_card) {
+        p.setRenderHint(QPainter::Antialiasing);
+        // A card shaped like a chord chart (not wider than it needs to be), centred.
+        QRectF card = QRectF(rect()).adjusted(8, 8, -8, -8);
+        const double w = std::min(card.width(), card.height() * 0.82);
+        const double x = m_cardAlign & Qt::AlignLeft ? card.left()
+                       : m_cardAlign & Qt::AlignRight ? card.right() - w : card.center().x() - w / 2;
+        card = QRectF(x, card.top(), w, card.height());
+        if (m_highlighted) {
+            // Soft glow around the card of the chord playing now.
+            QColor glow = palette().color(QPalette::Highlight);
+            for (int i = 3; i >= 1; --i) {
+                glow.setAlphaF(0.07);
+                p.setPen(Qt::NoPen);
+                p.setBrush(glow);
+                p.drawRoundedRect(card.adjusted(-2.5 * i, -2.5 * i, 2.5 * i, 2.5 * i), 14 + 2.5 * i, 14 + 2.5 * i);
+            }
+        }
+        QColor bg = palette().color(QPalette::Base);
+        bg.setAlphaF(m_dimmed ? 0.55 : 0.9);
+        p.setBrush(bg);
+        p.setPen(m_highlighted ? QPen(palette().color(QPalette::Highlight), 2.5) : QPen(palette().color(QPalette::Mid), 1));
+        p.drawRoundedRect(card, 14, 14);
+        area = card.adjusted(12, 10, -12, -12);
+    }
     DiagramStyle style;
     style.foreground = fg;
-    style.dots = m_dimmed ? fg : QColor(40, 120, 220);
+    style.dots = m_dimmed ? fg : palette().color(QPalette::Link);
     style.glowing = !m_dimmed;
     style.font = font();
-    drawChordDiagram(p, rect().adjusted(8, 4, -8, -4), m_chord ? &*m_chord : nullptr, style, m_caption, m_glow);
+    drawChordDiagram(p, area, m_chord ? &*m_chord : nullptr, style, m_caption, m_glow);
 }
 
 void drawChordDiagram(QPainter &p, const QRectF &r, const ChordShape *chord, const DiagramStyle &style,

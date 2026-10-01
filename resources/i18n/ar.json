@@ -264,5 +264,18 @@
  "No chords": "لا كوردات",
  "%1: %2": "%1: %2",
  "No songs to export.": "لا توجد أغانٍ للتصدير.",
- "Could not write %1": "تعذّرت كتابة %1"
+ "Could not write %1": "تعذّرت كتابة %1",
+ "&View": "&عرض",
+ "&Video mode (full screen, stage only)": "&وضع الفيديو (ملء الشاشة، المسرح فقط)",
+ "Video &window (stage only)": "&نافذة الفيديو (المسرح فقط)",
+ "%1 × %2 (square)": "%1 × %2 (مربّع)",
+ "%1 × %2": "%1 × %2",
+ "Back to the normal window": "العودة إلى النافذة العادية",
+ "Stage &colours": "&ألوان المسرح",
+ "Dark": "داكن",
+ "Light": "فاتح",
+ "Show all the chord shapes of the song": "عرض كل أشكال كوردات الأغنية",
+ "Video mode · Space plays · F11 goes back": "وضع الفيديو · المسافة للتشغيل · F11 للعودة",
+ "Chords in this song (%n)": "كوردات هذه الأغنية (%n)",
+ "Click a section to jump there": "انقر على مقطع للانتقال إليه"
 }
