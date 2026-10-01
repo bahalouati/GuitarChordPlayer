@@ -11,6 +11,7 @@
 #include "LyricsWidget.h"
 #include "PatternWidget.h"
 #include "SongEditor.h"
+#include "Translator.h"
 #include "Updater.h"
 #include "WavWriter.h"
 #include "PdfExport.h"
@@ -192,9 +193,11 @@ void MainWindow::buildUi()
     ll->addLayout(btnRow);
     ll->addWidget(new QLabel(tr("<b>Songs</b>")));
     m_songList = new QListWidget;
+    m_songList->setFont(appTextFont(m_songList->font())); // song titles may be in Arabic
     ll->addWidget(m_songList, 2);
     ll->addWidget(new QLabel(tr("<b>Arrangement</b> (click to jump)")));
     m_sectionList = new QListWidget;
+    m_sectionList->setFont(appTextFont(m_sectionList->font()));
     ll->addWidget(m_sectionList, 3);
     splitter->addWidget(left);
 
@@ -271,7 +274,7 @@ void MainWindow::buildUi()
     rl->addWidget(chordRow, 5);
 
     m_strip = new ChordStripWidget;
-    rl->addWidget(m_strip, 3);
+    rl->addWidget(m_strip, 2);
 
     m_lyrics = new LyricsWidget;
     m_lyrics->hide();
@@ -282,7 +285,7 @@ void MainWindow::buildUi()
         m_editorDock->raise();
         m_editor->goToLine(line);
     });
-    rl->addWidget(m_lyrics, 2);
+    rl->addWidget(m_lyrics, 3);
 
     m_pattern = new PatternWidget;
     rl->addWidget(m_pattern, 2);
@@ -1611,26 +1614,32 @@ void MainWindow::updateInfo()
 {
     if (!m_song)
         return;
-    // Direction marks keep the parts in order when the artist is written in another script.
-    const QString mark = uiDirectionMark();
-    QString info = mark + m_song->artist;
+    // Built from separate parts with direction marks between them, so numbers, Latin and
+    // Arabic text stay in order in either interface language.
+    QStringList parts;
     if (!m_song->artist.isEmpty())
-        info += mark + QStringLiteral("  ·  ") + mark;
-    info += tr("%1 BPM  ·  %2 beats per bar").arg(m_song->bpm).arg(m_song->beatsPerBar);
+        parts << m_song->artist;
+    parts << tr("%1 BPM").arg(m_song->bpm) << QStringLiteral("%1/4").arg(m_song->beatsPerBar);
     const int capo = m_view ? Arranger::capoOf(*m_view) : m_song->capo;
     if (capo != m_song->capo)
-        info += capo > 0 ? tr("  ·  Capo %1 (song: %2)").arg(capo).arg(m_song->capo)
-                         : tr("  ·  No capo (song: %1)").arg(m_song->capo);
+        parts << (capo > 0 ? tr("Capo %1 (song: %2)").arg(capo).arg(m_song->capo)
+                           : tr("No capo (song: %1)").arg(m_song->capo));
     else if (capo > 0)
-        info += tr("  ·  Capo %1").arg(capo);
+        parts << tr("Capo %1").arg(capo);
     const auto level = ChordName::Level(m_chordsBox->currentData().toInt());
     if (level == ChordName::Level::Simplify)
-        info += tr("  ·  Simplified chords");
+        parts << tr("Simplified chords");
     else if (level == ChordName::Level::SimplifyPlus)
-        info += tr("  ·  Simplified chords (easy shapes)");
+        parts << tr("Simplified chords (easy shapes)");
     if (!m_song->audioFile.isEmpty())
-        info += tr("  ·  ♪ %1").arg(QFileInfo(m_song->audioFile).fileName());
-    m_info->setText(info);
+        parts << QStringLiteral("♪ ") + QFileInfo(m_song->audioFile).fileName();
+    const QString mark = uiDirectionMark();
+    // Parts in Latin letters and digits ("84 BPM") stay one left-to-right unit in Arabic.
+    const QChar lrm(0x200E);
+    for (QString &part : parts)
+        if (!part.isRightToLeft())
+            part = lrm + part + lrm;
+    m_info->setText(mark + parts.join(mark + QStringLiteral("  ·  ") + mark) + mark);
 }
 
 void MainWindow::rearrange()

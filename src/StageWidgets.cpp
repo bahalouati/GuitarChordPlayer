@@ -1,6 +1,7 @@
 #include "StageWidgets.h"
 
 #include "ChordDiagramWidget.h"
+#include "Translator.h"
 
 #include <QMouseEvent>
 #include <QPainter>
@@ -64,6 +65,8 @@ QVector<ChordShape> chordsInSong(const Timeline &tl)
 
 StageWidget::StageWidget(QWidget *parent) : QWidget(parent)
 {
+    // Everything on the stage uses the app's text font (clear Arabic, matching Latin).
+    setFont(appTextFont(font()));
     setTheme(Stage::Theme::Dark);
 }
 
@@ -105,6 +108,7 @@ ChordStripWidget::ChordStripWidget(QWidget *parent) : QWidget(parent)
     // Diagrams read left to right in every language.
     setLayoutDirection(Qt::LeftToRight);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    setMinimumHeight(120); // keep the charts readable when the song has many chords
 }
 
 void ChordStripWidget::setChords(const QVector<ChordShape> &chords)
