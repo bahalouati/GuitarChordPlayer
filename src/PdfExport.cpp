@@ -3,6 +3,7 @@
 #include "Arranger.h"
 #include "ChordDiagramWidget.h"
 #include "Song.h"
+#include "Translator.h"
 
 #include <QCoreApplication>
 #include <QFileInfo>
@@ -157,7 +158,7 @@ public:
 private:
     QFont font(double size, bool bold = false) const
     {
-        QFont f;
+        QFont f = appTextFont(QFont());
         // Sizes are in points of the page: the painter is scaled from the device's pixels.
         f.setPointSizeF(size * 72.0 / m_writer->logicalDpiY());
         f.setBold(bold);
@@ -277,6 +278,7 @@ private:
             style.minFont = 4.0;
             style.lineScale = 0.45;
             style.fingerNumbers = false;  // too small to read at this size
+            style.font = appTextFont(QFont());
             const double left = box.left() + (box.width() - cols * cellW) / 2;
             for (int k = 0; k < chords[i].size(); ++k) {
                 const QRectF cell(left + (k % cols) * cellW, box.top() + titleH + (k / cols) * cellH, cellW, cellH);

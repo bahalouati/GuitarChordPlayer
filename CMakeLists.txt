@@ -41,6 +41,7 @@ qt_add_executable(GuitarChordPlayer WIN32
 qt_add_resources(GuitarChordPlayer docs
     PREFIX "/"
     FILES docs/LLM_PROMPT.md resources/app.png resources/i18n/ar.json
+          resources/fonts/IBMPlexSansArabic-Regular.ttf resources/fonts/IBMPlexSansArabic-Bold.ttf
 )
 
 target_include_directories(GuitarChordPlayer PRIVATE third_party/minimp3)

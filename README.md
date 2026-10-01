@@ -405,6 +405,7 @@ finger would.
 | `src/Updater.*` | Checks GitHub releases and installs updates |
 | `src/AudioTrack.*` | Decoding recordings (MP3 with [minimp3](https://github.com/lieff/minimp3), WAV, others via Qt Multimedia) and WSOLA time stretching |
 | `third_party/minimp3/` | minimp3 MP3 decoder (public domain, CC0) |
+| `resources/fonts/` | [IBM Plex Sans Arabic](https://github.com/IBM/plex) (SIL Open Font License, `OFL.txt`): the stage, printed sheets, song lists and the Arabic interface |
 | `src/ChordDetector.*` | Beat tracking, chroma and chord recognition for *New song from MP3* |
 | `installer.iss`, `resources/` | Windows installer (Inno Setup), icon and version info |
 | `src/ChordName.*` | Chord name parsing (English / solfège / Arabic), transposing, simplifying |

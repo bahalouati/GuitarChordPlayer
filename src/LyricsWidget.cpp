@@ -77,7 +77,11 @@ double LyricsWidget::drawLine(QPainter &p, const QRectF &r, int line, int highli
             rtl = it.text.isRightToLeft();
             break;
         }
-    const Qt::Alignment hAlign = rtl ? Qt::AlignRight : Qt::AlignLeft;
+    // Absolute: right means right also when the whole interface is right to left.
+    const Qt::Alignment hAlign = (rtl ? Qt::AlignRight : Qt::AlignLeft) | Qt::AlignAbsolute;
+    // Draw the words in their own direction (an English line in the Arabic interface keeps
+    // its full stop at the end).
+    p.setLayoutDirection(rtl ? Qt::RightToLeft : Qt::LeftToRight);
 
     if (!l.split) {
         // One lyric for the whole line: chords spread above it, progress underline below.
@@ -171,11 +175,15 @@ void LyricsWidget::paintEvent(QPaintEvent *)
         return;
     const int next = current + 1 < m_tl->lyricLines.size() ? current + 1 : -1;
 
-    // Font size: as big as fits, shrinking for long lines.
+    // Font size: as big as fits, shrinking for long lines (and leaving room for the
+    // "singing starts" note and the next line).
     double size = std::clamp(r.height() * 0.16, 10.0, 24.0);
-    const double avail = r.height() * (next >= 0 ? 0.62 : 1.0);
-    while (size > 9 && drawLine(p, r, current, -1, 0, size, false, true) > avail)
+    auto availFor = [&](double sz) {
+        return (r.height() - (upcoming ? sz * 0.9 : 0.0)) * (next >= 0 ? 0.62 : 1.0);
+    };
+    while (size > 9 && drawLine(p, r, current, -1, 0, size, false, true) > availFor(size))
         size -= 1;
+    const double avail = availFor(size);
 
     if (upcoming) {
         QFont f = font();
@@ -194,8 +202,12 @@ void LyricsWidget::paintEvent(QPaintEvent *)
 
     if (next >= 0) {
         const QRectF nr(r.left(), top + h + 2, r.width(), r.bottom() - (top + h + 2));
-        if (nr.height() > 10) {
-            const double nh = drawLine(p, nr, next, -1, 0, std::max(8.0, size * 0.7), true, false);
+        // The next line, smaller, shrunk further if needed to fit what is left.
+        double nsize = std::max(8.0, size * 0.7);
+        while (nsize > 7 && drawLine(p, nr, next, -1, 0, nsize, true, true) > nr.height())
+            nsize -= 0.5;
+        if (nr.height() > 10 && drawLine(p, nr, next, -1, 0, nsize, true, true) <= nr.height() + 1) {
+            const double nh = drawLine(p, nr, next, -1, 0, nsize, true, false);
             m_nextLine = m_tl->lyricLines[next].sourceLine;
             m_nextRect = QRectF(nr.left(), nr.top(), nr.width(), nh);
         }
